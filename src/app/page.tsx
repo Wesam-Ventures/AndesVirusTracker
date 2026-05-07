@@ -2,6 +2,8 @@
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import StatCounter from '@/components/StatCounter'
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
 
 const GlobeComponent = dynamic(() => import('@/components/GlobeComponent'), { ssr: false })
 
@@ -218,34 +220,7 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
-      {/* ── NAV ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '10px 12px 0' }}>
-        <nav className="glass" style={{ maxWidth: 900, margin: '0 auto', borderRadius: 12, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          {/* Logo + LIVE badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <span className="font-display" style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg)', letterSpacing: 0.5, whiteSpace: 'nowrap' }}>ANDES VIRUS</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 20, padding: '3px 7px', flexShrink: 0 }}>
-              <div className="blink" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--red)' }} />
-              <span className="font-mono" style={{ fontSize: 8, color: 'var(--red)', letterSpacing: 1.5 }}>LIVE</span>
-            </div>
-          </div>
-          {/* Desktop nav links — hidden on mobile */}
-          <div className="hidden md:flex" style={{ gap: 18, alignItems: 'center' }}>
-            {['Map', 'Risk', 'News', 'Protect'].map(l => (
-              <a key={l} href={`#${l.toLowerCase()}`} className="font-mono"
-                style={{ fontSize: 10, color: 'var(--fg-dim)', letterSpacing: 1, textDecoration: 'none', transition: 'color 150ms' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--fg)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-dim)')}>
-                {l.toUpperCase()}
-              </a>
-            ))}
-          </div>
-          {/* GET ALERTS — always visible */}
-          <a href="#alerts" style={{ background: 'var(--red)', color: '#fff', borderRadius: 8, padding: '6px 12px', fontSize: 9, fontWeight: 700, letterSpacing: 0.5, textDecoration: 'none', fontFamily: 'Space Mono, monospace', whiteSpace: 'nowrap', flexShrink: 0 }}>
-            GET ALERTS
-          </a>
-        </nav>
-      </div>
+      <SiteNav />
 
       {/* ── BREAKING BANNER ── */}
       <div style={{ maxWidth: 900, margin: '12px auto', padding: '0 16px' }}>
@@ -542,26 +517,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
-      <footer style={{ maxWidth: 900, margin: '48px auto', padding: '24px 16px', borderTop: '1px solid var(--line)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <span className="font-display" style={{ fontSize: 12, color: 'var(--fg-dim)', letterSpacing: 2 }}>ANDESVIRUSTRACKER.COM</span>
-            <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', marginTop: 4, opacity: 0.5 }}>Data: WHO · CDC · ECDC · Not medical advice · Not affiliated with any government body</p>
-          </div>
-          <div style={{ display: 'flex', gap: 16 }}>
-            {['About', 'Privacy', 'Contact'].map(l => (
-              <a key={l} href="#" className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 1.5, textDecoration: 'none' }}>{l.toUpperCase()}</a>
-            ))}
-          </div>
-        </div>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', marginTop: 16, opacity: 0.3 }}>© 2026 ANDESVIRUSTRACKER.COM · OPERATED BY WESAM VENTURES LLC</p>
-        <div style={{ marginTop: 16, padding: '16px', background: 'var(--bg-1)', border: '1px solid var(--line)', borderRadius: 8 }}>
-          <p className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', lineHeight: 1.8, opacity: 0.6 }}>
-            LEGAL DISCLAIMER — AndesVirusTracker.com is operated by Wesam Ventures LLC. This website is provided for informational and educational purposes only. The information presented on this site is aggregated from publicly available sources including the World Health Organization (WHO), the Centers for Disease Control and Prevention (CDC), and the European Centre for Disease Prevention and Control (ECDC). This site is not affiliated with, endorsed by, or representing any government agency or health authority. Nothing on this site constitutes medical advice, diagnosis, or treatment. The risk assessment tool and incubation calculator are educational tools only and should not be used as a substitute for professional medical evaluation. If you believe you have been exposed to any infectious disease, contact a licensed healthcare provider immediately. Affiliate product links are provided as a convenience; Wesam Ventures LLC earns a commission from qualifying Amazon purchases. Wesam Ventures LLC makes no warranties regarding the accuracy, completeness, or timeliness of information on this site and assumes no liability for any decisions made based on content herein.
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
 
     </div>
   )
