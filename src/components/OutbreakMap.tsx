@@ -3,64 +3,105 @@ import { useEffect } from 'react'
 import 'leaflet/dist/leaflet.css'
 
 const MARKERS = [
-  { lat: -54.8, lng: -68.3, name: 'Argentina (Origin)', status: 'Endemic Region', color: '#DC2626' },
-  { lat: 14.9, lng: -23.5, name: 'MV Hondius — Last Position', status: 'Near Cape Verde — active ship', color: '#DC2626' },
-  { lat: 46.8, lng: 8.2, name: 'Switzerland', status: '✅ Confirmed case — Andes strain', color: '#DC2626' },
-  { lat: 50.8, lng: 4.4, name: 'Belgium', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 46.2, lng: 2.2, name: 'France', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 51.2, lng: 10.4, name: 'Germany', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 39.1, lng: 22.0, name: 'Greece', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 53.1, lng: -8.2, name: 'Ireland', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 52.1, lng: 5.3, name: 'Netherlands', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 52.0, lng: 19.1, name: 'Poland', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 39.4, lng: -8.2, name: 'Portugal', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 40.5, lng: -3.7, name: 'Spain', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 1.4, lng: 103.8, name: 'Singapore', status: '⚠️ Monitoring passengers', color: '#F59E0B' },
-  { lat: 37.1, lng: -95.7, name: 'United States', status: '⚠️ CDC monitoring', color: '#F59E0B' },
+  { lat: -54.8, lng: -68.3, name: 'ARGENTINA', sub: 'Origin · Endemic Region', color: '#ef4444', type: 'confirmed' },
+  { lat: 14.9,  lng: -23.5, name: 'MV HONDIUS', sub: 'Active Ship · Near Cape Verde', color: '#ef4444', type: 'confirmed' },
+  { lat: 46.8,  lng: 8.2,   name: 'SWITZERLAND', sub: 'Confirmed Case', color: '#ef4444', type: 'confirmed' },
+  { lat: 50.8,  lng: 4.4,   name: 'BELGIUM',     sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 46.2,  lng: 2.2,   name: 'FRANCE',      sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 51.2,  lng: 10.4,  name: 'GERMANY',     sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 39.1,  lng: 22.0,  name: 'GREECE',      sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 53.1,  lng: -8.2,  name: 'IRELAND',     sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 52.1,  lng: 5.3,   name: 'NETHERLANDS', sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 52.0,  lng: 19.1,  name: 'POLAND',      sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 39.4,  lng: -8.2,  name: 'PORTUGAL',    sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 40.5,  lng: -3.7,  name: 'SPAIN',       sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 1.4,   lng: 103.8, name: 'SINGAPORE',   sub: 'Active Monitoring', color: '#f59e0b', type: 'monitoring' },
+  { lat: 37.1,  lng: -95.7, name: 'UNITED STATES', sub: 'CDC Monitoring', color: '#3b82f6', type: 'monitoring' },
 ]
 
 export default function OutbreakMap() {
   useEffect(() => {
     if (typeof window === 'undefined') return
-    // Dynamic import to avoid SSR issues
     import('leaflet').then((L) => {
-      const mapEl = document.getElementById('outbreak-map')
-      if (!mapEl || (mapEl as any)._leaflet_id) return
+      const el = document.getElementById('outbreak-map')
+      if (!el || (el as any)._leaflet_id) return
 
       const map = L.map('outbreak-map', {
-        center: [20, 0],
+        center: [20, 5],
         zoom: 2,
-        zoomControl: true,
+        zoomControl: false,
+        attributionControl: false,
       })
 
+      L.control.zoom({ position: 'bottomright' }).addTo(map)
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        className: 'map-tiles',
+        maxZoom: 10,
       }).addTo(map)
 
-      MARKERS.forEach((m) => {
+      MARKERS.forEach((m, i) => {
+        const isConfirmed = m.type === 'confirmed'
         const icon = L.divIcon({
-          html: `<div style="width:14px;height:14px;border-radius:50%;background:${m.color};border:2px solid white;box-shadow:0 0 6px ${m.color}"></div>`,
+          html: `
+            <div style="position:relative;width:20px;height:20px;display:flex;align-items:center;justify-content:center">
+              <div style="position:absolute;width:20px;height:20px;border-radius:50%;background:${m.color};opacity:0.15;animation:ping-slow ${1.8 + i * 0.1}s ease-out infinite"></div>
+              <div style="position:absolute;width:10px;height:10px;border-radius:50%;background:${m.color};opacity:0.3;animation:ping-slow ${1.8 + i * 0.1}s ease-out infinite 0.4s"></div>
+              <div style="width:${isConfirmed ? 8 : 6}px;height:${isConfirmed ? 8 : 6}px;border-radius:50%;background:${m.color};border:1.5px solid rgba(255,255,255,0.3);position:relative;z-index:1;box-shadow:0 0 8px ${m.color}"></div>
+            </div>`,
           className: '',
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
         })
 
         L.marker([m.lat, m.lng], { icon })
-          .bindPopup(`<b style="color:#111">${m.name}</b><br/><span style="color:#555;font-size:12px">${m.status}</span>`)
+          .bindPopup(`
+            <div style="font-family:'Space Mono',monospace;padding:2px">
+              <div style="color:#ef4444;font-size:9px;letter-spacing:1.5px;margin-bottom:4px">${m.type === 'confirmed' ? '● CONFIRMED' : '◎ MONITORING'}</div>
+              <div style="color:#e2e8f0;font-size:11px;font-weight:700;margin-bottom:2px">${m.name}</div>
+              <div style="color:#64748b;font-size:10px">${m.sub}</div>
+            </div>`)
           .addTo(map)
       })
+
+      // Ship route line
+      const route: [number, number][] = [
+        [-54.8, -68.3], [-45.0, -60.0], [-30.0, -40.0],
+        [-10.0, -25.0], [5.0, -18.0], [14.9, -23.5]
+      ]
+      L.polyline(route, {
+        color: '#ef4444',
+        weight: 1.5,
+        opacity: 0.4,
+        dashArray: '4 6',
+      }).addTo(map)
     })
   }, [])
 
   return (
-    <div>
-      <style>{`
-        #outbreak-map { height: 480px; width: 100%; background: #0a0a0a; }
-        .leaflet-tile { filter: brightness(0.7) saturate(0.6); }
-        .leaflet-popup-content-wrapper { border-radius: 8px; }
-      `}</style>
-      <div id="outbreak-map" />
+    <div style={{ position: 'relative', height: '520px', background: 'var(--bg)' }}>
+      <div className="scan-line" />
+      <div id="outbreak-map" style={{ height: '100%', width: '100%' }} />
+      <div style={{
+        position: 'absolute', bottom: 12, left: 12, zIndex: 1000,
+        background: 'rgba(13,16,20,0.9)', backdropFilter: 'blur(8px)',
+        border: '1px solid var(--line-strong)', borderRadius: 8, padding: '8px 12px',
+        fontFamily: 'Space Mono, monospace', fontSize: 10, color: 'var(--fg-dim)',
+      }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+            CONFIRMED
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+            MONITORING
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="16" height="4" viewBox="0 0 16 4"><line x1="0" y1="2" x2="16" y2="2" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3 4" /></svg>
+            SHIP ROUTE
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
