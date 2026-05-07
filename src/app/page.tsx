@@ -2,7 +2,7 @@
 import dynamic from 'next/dynamic'
 import StatCounter from '@/components/StatCounter'
 
-const OutbreakMap = dynamic(() => import('@/components/OutbreakMap'), { ssr: false })
+const GlobeComponent = dynamic(() => import('@/components/GlobeComponent'), { ssr: false })
 
 const NEWS = [
   { source: 'WHO', tag: 'OFFICIAL', color: '#3b82f6', title: 'Multi-country cluster of Andes virus disease — Disease Outbreak Notice', date: 'May 6, 2026', url: 'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599' },
@@ -54,20 +54,22 @@ export default function Home() {
               <span className="font-mono" style={{ fontSize: 9, color: 'var(--red)', letterSpacing: 1.5 }}>LIVE</span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-            {['Map', 'News', 'Protect'].map(l => (
-              <a key={l} href={`#${l.toLowerCase()}`} className="font-mono"
-                style={{ fontSize: 10, color: 'var(--fg-dim)', letterSpacing: 1, textDecoration: 'none', transition: 'color 150ms' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--fg)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-dim)')}>
-                {l.toUpperCase()}
-              </a>
-            ))}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div className="hidden md:flex" style={{ gap: 20, alignItems: 'center' }}>
+              {['Map', 'News', 'Protect'].map(l => (
+                <a key={l} href={`#${l.toLowerCase()}`} className="font-mono"
+                  style={{ fontSize: 10, color: 'var(--fg-dim)', letterSpacing: 1, textDecoration: 'none', transition: 'color 150ms' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--fg)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-dim)')}>
+                  {l.toUpperCase()}
+                </a>
+              ))}
+            </div>
             <a href="#alerts" style={{
               background: 'var(--red)', color: '#fff',
-              borderRadius: 8, padding: '5px 12px', fontSize: 10, fontWeight: 700,
+              borderRadius: 8, padding: '5px 10px', fontSize: 9, fontWeight: 700,
               letterSpacing: 0.5, textDecoration: 'none', fontFamily: 'Space Mono, monospace',
-              transition: 'opacity 150ms',
+              transition: 'opacity 150ms', whiteSpace: 'nowrap',
             }}>GET ALERTS</a>
           </div>
         </nav>
@@ -101,7 +103,7 @@ export default function Home() {
             OUTBREAK · DAY 15 · WHO CONFIRMED
           </p>
           <h1 className="font-display" style={{
-            fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 900,
+            fontSize: 'clamp(28px, 7vw, 72px)', fontWeight: 900,
             lineHeight: 0.95, letterSpacing: -1, color: 'var(--fg)',
             marginBottom: 20,
           }}>
@@ -114,7 +116,7 @@ export default function Home() {
         </div>
 
         {/* STAT CARDS — corner bracket style with animated counters */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: 'var(--line)' }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--line)]">
           {[
             { label: 'CONFIRMED CASES', value: 8, color: 'var(--red)', delay: 0 },
             { label: 'DEATHS',          value: 3, color: 'var(--red)', delay: 100 },
@@ -142,7 +144,7 @@ export default function Home() {
         </div>
 
         {/* SECONDARY STATS */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: 'var(--line)', marginTop: 1 }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--line)]" style={{ marginTop: 1 }}>
           {[
             { label: 'CASE FATALITY RATE', value: '~40%', color: 'var(--red)' },
             { label: 'P2P TRANSMISSION', value: 'CONFIRMED', color: 'var(--amber)' },
@@ -153,6 +155,81 @@ export default function Home() {
               <span className="font-mono" style={{ fontSize: 11, color: s.color, fontWeight: 700 }}>{s.value}</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* WHO RISK LEVEL PANEL */}
+      <div style={{ maxWidth: 900, margin: '16px auto 0', padding: '0 16px' }}>
+        <div style={{
+          background: 'var(--bg-1)', border: '1px solid var(--line-strong)',
+          borderRadius: 10, padding: '16px 20px',
+          display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+        }}>
+          {/* WHO logo block */}
+          <div style={{ display: 'flex', flex: '0 0 auto', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 8,
+              background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                <path d="M2 12h20" />
+              </svg>
+            </div>
+            <div>
+              <div className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', letterSpacing: 2 }}>WHO ASSESSMENT</div>
+              <div className="font-mono" style={{ fontSize: 9, color: 'var(--blue)', letterSpacing: 1, marginTop: 2 }}>OFFICIAL RISK LEVEL</div>
+            </div>
+          </div>
+
+          {/* Risk level bar */}
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ display: 'flex', gap: 2, marginBottom: 6 }}>
+              {[
+                { label: 'LOW',      active: false, color: '#4ade80' },
+                { label: 'MODERATE', active: true,  color: '#f59e0b' },
+                { label: 'HIGH',     active: false, color: '#ef4444' },
+                { label: 'CRITICAL', active: false, color: '#7f1d1d' },
+              ].map(level => (
+                <div key={level.label} style={{
+                  flex: 1, height: 6, borderRadius: 2,
+                  background: level.active ? level.color : 'rgba(148,163,184,0.1)',
+                  boxShadow: level.active ? `0 0 8px ${level.color}80` : 'none',
+                  transition: 'all 0.3s',
+                }} />
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 2 }}>
+              {['LOW', 'MODERATE', 'HIGH', 'CRITICAL'].map((label, i) => (
+                <div key={label} style={{ flex: 1 }}>
+                  <span className="font-mono" style={{
+                    fontSize: 7, letterSpacing: 1,
+                    color: i === 1 ? '#f59e0b' : 'var(--fg-dim)',
+                    fontWeight: i === 1 ? 700 : 400,
+                  }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Current level badge */}
+          <div style={{ display: 'flex', flex: '0 0 auto', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)',
+              borderRadius: 8, padding: '6px 14px', textAlign: 'center',
+            }}>
+              <div className="font-mono" style={{ fontSize: 14, fontWeight: 700, color: '#f59e0b', letterSpacing: 2 }}>MODERATE</div>
+              <div className="font-mono" style={{ fontSize: 7, color: 'var(--fg-dim)', letterSpacing: 1, marginTop: 2 }}>P2P CONFIRMED</div>
+            </div>
+            <a href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599"
+              target="_blank" rel="noopener noreferrer"
+              className="font-mono"
+              style={{ fontSize: 8, color: 'var(--blue)', letterSpacing: 1, textDecoration: 'none' }}>
+              WHO SOURCE →
+            </a>
+          </div>
         </div>
       </div>
 
@@ -173,7 +250,7 @@ export default function Home() {
           </div>
         </div>
         <div style={{ border: '1px solid var(--line-strong)', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
-          <OutbreakMap />
+          <GlobeComponent />
         </div>
       </div>
 
@@ -183,7 +260,7 @@ export default function Home() {
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 24 }}>
           WHY ANDES VIRUS IS DIFFERENT
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 32 }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3" style={{ marginBottom: 32 }}>
           {[
             { icon: '👥', label: 'P2P TRANSMISSION', desc: 'Only hantavirus with confirmed human-to-human spread. Requires prolonged close contact — not airborne.', color: 'var(--red)' },
             { icon: '💀', label: '~40% FATALITY RATE', desc: 'Among the highest CFRs for respiratory pathogens outside classified agents. Causes rapid HPS.', color: 'var(--amber)' },
@@ -232,7 +309,7 @@ export default function Home() {
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 24 }}>
           LATEST UPDATES
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, background: 'var(--line)' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[var(--line)]">
           {NEWS.map((n) => (
             <a key={n.title} href={n.url} target="_blank" rel="noopener noreferrer"
               style={{
@@ -267,7 +344,7 @@ export default function Home() {
           PROTECT YOURSELF
         </h2>
         <p style={{ fontSize: 12, color: 'var(--fg-dim)', marginBottom: 24 }}>Affiliate links support this free tracker. Prices approximate.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: 'var(--line)' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-[var(--line)]">
           {GEAR.map((g) => (
             <a key={g.name} href={g.url} target="_blank" rel="noopener noreferrer"
               style={{

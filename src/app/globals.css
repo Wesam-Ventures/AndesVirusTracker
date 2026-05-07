@@ -1,8 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
 
 :root {
   --bg:          #0a0c0f;
@@ -129,3 +126,8 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
+
+/* ---- MOBILE TYPOGRAPHY TIGHTENING ---- */
+@media (max-width: 640px) {
+  .font-display { letter-spacing: 0 !important; }
+}
