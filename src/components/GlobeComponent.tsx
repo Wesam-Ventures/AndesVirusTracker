@@ -148,27 +148,18 @@ function DesktopGlobe() {
 
 // ── Main export — picks globe vs map based on device ─────────────────────────
 export default function GlobeComponent() {
-  const [isMobile, setIsMobile] = useState<boolean | null>(null)
+  const [isMobile, setIsMobile] = useState(true) // default to safe 2D map
 
   useEffect(() => {
-    // Check for mobile AND WebGL support
     const mobile = window.innerWidth < 768
     let webglOk = false
     try {
       const canvas = document.createElement('canvas')
       webglOk = !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
     } catch {}
+    // Only use 3D globe on desktop with WebGL support
     setIsMobile(mobile || !webglOk)
   }, [])
-
-  // Loading state — show placeholder while detecting
-  if (isMobile === null) {
-    return (
-      <div style={{ height: 320, background: '#060810', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="font-mono" style={{ fontSize: 10, color: '#475569', letterSpacing: 2 }}>LOADING MAP...</div>
-      </div>
-    )
-  }
 
   return isMobile ? <MobileMap /> : <DesktopGlobe />
 }
