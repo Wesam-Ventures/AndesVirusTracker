@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Can Andes Virus Spread Person to Person? | AndesVirusTracker.com',
   description: 'Yes — Andes virus is the only hantavirus confirmed to spread human-to-human. Learn how it transmits, the risk factors, and how the 2026 MV Hondius outbreak happened.',
   keywords: ['Andes virus person to person', 'can hantavirus spread between humans', 'Andes virus transmission', 'hantavirus human to human', 'Andes virus contact'],
-  openGraph: { title: 'Can Andes Virus Spread Person to Person?', description: 'Andes virus is the ONLY hantavirus that spreads human-to-human. Here is exactly how it transmits.', url: 'https://andesvirustracker.com/andes-virus-transmission' },
+  openGraph: { title: 'Can Andes Virus Spread Person to Person?', description: 'Andes virus is the ONLY hantavirus that spreads human-to-human. Here is exactly how it transmits.', url: 'https://andesvirustracker.com/andes-virus-transmission', images: [{ url: '/og?title=andes+virus+transmission', width: 1200, height: 630 }] },
   alternates: { canonical: 'https://andesvirustracker.com/andes-virus-transmission' },
 }
 

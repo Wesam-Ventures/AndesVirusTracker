@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Andes Virus Symptoms — Full Clinical Timeline 2026 | AndesVirusTracker.com',
   description: 'Complete guide to Andes virus symptoms: prodromal phase (days 1-5), cardiopulmonary phase (days 5-10), and what to do if you were exposed. Includes emergency warning signs.',
   keywords: ['Andes virus symptoms', 'hantavirus symptoms 2026', 'Andes virus signs', 'hantavirus pulmonary syndrome symptoms', 'HPS symptoms', 'Andes hantavirus clinical presentation'],
-  openGraph: { title: 'Andes Virus Symptoms — Full Clinical Timeline', description: 'What does Andes virus feel like? Phase-by-phase symptom guide with emergency warning signs.', url: 'https://andesvirustracker.com/andes-virus-symptoms' },
+  openGraph: { title: 'Andes Virus Symptoms — Full Clinical Timeline', description: 'What does Andes virus feel like? Phase-by-phase symptom guide with emergency warning signs.', url: 'https://andesvirustracker.com/andes-virus-symptoms', images: [{ url: '/og?title=andes+virus+symptoms', width: 1200, height: 630 }] },
   alternates: { canonical: 'https://andesvirustracker.com/andes-virus-symptoms' },
 }
 

@@ -4,12 +4,43 @@ import SiteFooter from '@/components/SiteFooter'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Andes Virus News & Updates 2026 — MV Hondius Outbreak | AndesVirusTracker.com',
+  title: 'Andes Virus News & Updates 2026 — MV Hondius Outbreak',
   description: 'Latest Andes virus news, case updates, and WHO/CDC statements. Chronological timeline of the 2026 MV Hondius hantavirus outbreak. Updated daily.',
   keywords: ['Andes virus news', 'hantavirus news 2026', 'MV Hondius update', 'Andes virus outbreak updates', 'hantavirus cruise ship news'],
-  openGraph: { title: 'Andes Virus News & Updates 2026', description: 'Latest case updates, WHO statements, and outbreak news — updated daily.', url: 'https://andesvirustracker.com/andes-virus-news' },
+  openGraph: {
+    title: 'Andes Virus News & Updates 2026 — MV Hondius Outbreak',
+    description: 'Latest case updates, WHO statements, and outbreak news — updated daily.',
+    url: 'https://andesvirustracker.com/andes-virus-news',
+    type: 'article',
+    publishedTime: '2026-05-07T00:00:00Z',
+    modifiedTime: '2026-05-07T14:00:00Z',
+    images: [{ url: '/og?title=Andes+Virus+News+2026&sub=Latest+WHO+%2F+CDC+outbreak+updates', width: 1200, height: 630 }],
+  },
   alternates: { canonical: 'https://andesvirustracker.com/andes-virus-news' },
 }
+
+const newsJsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: 'Andes Virus 2026 Outbreak — MV Hondius Case Timeline',
+    description: 'Chronological timeline of the 2026 Andes virus outbreak linked to the MV Hondius polar expedition cruise.',
+    datePublished: '2026-05-07T00:00:00Z',
+    dateModified: '2026-05-07T14:00:00Z',
+    author: { '@type': 'Organization', name: 'AndesVirusTracker.com' },
+    publisher: { '@type': 'Organization', name: 'AndesVirusTracker.com', logo: { '@type': 'ImageObject', url: 'https://andesvirustracker.com/og' } },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://andesvirustracker.com/andes-virus-news' },
+    image: 'https://andesvirustracker.com/og?title=Andes+Virus+News+2026',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://andesvirustracker.com' },
+      { '@type': 'ListItem', position: 2, name: 'Andes Virus News', item: 'https://andesvirustracker.com/andes-virus-news' },
+    ],
+  },
+]
 
 const TIMELINE = [
   {
@@ -53,6 +84,9 @@ const TIMELINE = [
 export default function NewsPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {newsJsonLd.map((s, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
+      ))}
       <SiteNav />
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 16px 0' }}>
         <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 12 }}>OUTBREAK TIMELINE · UPDATED MAY 7, 2026</p>

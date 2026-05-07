@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Andes Virus vs Hantavirus — Key Differences | AndesVirusTracker.com',
   description: 'Andes virus IS a hantavirus — but with one critical difference: it spreads person-to-person. Full comparison of Andes virus vs all other hantavirus strains, including Sin Nombre virus.',
   keywords: ['Andes virus vs hantavirus', 'difference between Andes virus and hantavirus', 'hantavirus strains', 'Sin Nombre virus vs Andes virus', 'which hantavirus is most dangerous'],
-  openGraph: { title: 'Andes Virus vs Hantavirus — What Is the Difference?', description: 'Andes virus is the only hantavirus that spreads person-to-person. Here is how it compares to all other strains.', url: 'https://andesvirustracker.com/andes-virus-vs-hantavirus' },
+  openGraph: { title: 'Andes Virus vs Hantavirus — What Is the Difference?', description: 'Andes virus is the only hantavirus that spreads person-to-person. Here is how it compares to all other strains.', url: 'https://andesvirustracker.com/andes-virus-vs-hantavirus', images: [{ url: '/og?title=andes+virus+vs+hantavirus', width: 1200, height: 630 }] },
   alternates: { canonical: 'https://andesvirustracker.com/andes-virus-vs-hantavirus' },
 }
 

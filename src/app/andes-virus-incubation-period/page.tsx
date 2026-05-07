@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Andes Virus Incubation Period: 9 to 33 Days | AndesVirusTracker.com',
   description: 'The Andes virus incubation period is 9–33 days (average 18 days). Use our free exposure date calculator to determine your symptom window based on WHO data.',
   keywords: ['Andes virus incubation period', 'hantavirus incubation period', 'Andes virus symptoms when', 'how long after exposure hantavirus', 'hantavirus incubation 2026'],
-  openGraph: { title: 'Andes Virus Incubation Period: 9 to 33 Days', description: 'When do Andes virus symptoms appear? Use our calculator to find your exposure window.', url: 'https://andesvirustracker.com/andes-virus-incubation-period' },
+  openGraph: { title: 'Andes Virus Incubation Period: 9 to 33 Days', description: 'When do Andes virus symptoms appear? Use our calculator to find your exposure window.', url: 'https://andesvirustracker.com/andes-virus-incubation-period', images: [{ url: '/og?title=andes+virus+incubation+period', width: 1200, height: 630 }] },
   alternates: { canonical: 'https://andesvirustracker.com/andes-virus-incubation-period' },
 }
 
