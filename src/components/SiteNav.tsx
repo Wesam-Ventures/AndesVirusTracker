@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: '/andes-virus-incubation-period', label: 'Incubation' },
   { href: '/andes-virus-vs-hantavirus',     label: 'vs Hantavirus' },
   { href: '/andes-virus-news',              label: 'News' },
+  { href: '/about',                         label: 'About' },
 ]
 
 export default function SiteNav() {
