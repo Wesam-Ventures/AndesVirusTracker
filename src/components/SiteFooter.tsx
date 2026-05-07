@@ -44,7 +44,7 @@ export default function SiteFooter() {
 
       <div style={{ borderTop: '1px solid var(--line)', paddingTop: 20 }}>
         <p className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', lineHeight: 1.9, opacity: 0.5 }}>
-          LEGAL DISCLAIMER — AndesVirusTracker.com is operated by Wesam Ventures LLC. This website is for informational and educational purposes only. Not affiliated with WHO, CDC, or any government agency. Nothing on this site constitutes medical advice, diagnosis, or treatment. If you believe you have been exposed to any infectious disease, contact a licensed healthcare provider immediately. Affiliate links earn commissions from qualifying Amazon purchases. © 2026 Wesam Ventures LLC. All rights reserved.
+          LEGAL DISCLAIMER — AndesVirusTracker.com is operated by M&W Business Development LLC. This website is for informational and educational purposes only. Not affiliated with WHO, CDC, or any government agency. Nothing on this site constitutes medical advice, diagnosis, or treatment. If you believe you have been exposed to any infectious disease, contact a licensed healthcare provider immediately. Affiliate links earn commissions from qualifying Amazon purchases. © 2026 M&W Business Development LLC. All rights reserved.
         </p>
       </div>
     </footer>
