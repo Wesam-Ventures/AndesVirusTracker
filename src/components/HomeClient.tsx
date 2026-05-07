@@ -217,6 +217,23 @@ interface Props {
 export default function Home({ stats, news }: Props) {
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
+  const [subscribing, setSubscribing] = useState(false)
+  const [subError, setSubError] = useState('')
+
+  const handleSubscribe = async () => {
+    if (!email || !email.includes('@')) { setSubError('Enter a valid email'); return }
+    setSubscribing(true); setSubError('')
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (res.ok) { setSubscribed(true) }
+      else { setSubError('Something went wrong — try again') }
+    } catch { setSubError('Connection error — try again') }
+    finally { setSubscribing(false) }
+  }
 
   const section = (id?: string) => ({
     id,
@@ -519,14 +536,22 @@ export default function Home({ stats, news }: Props) {
             <h2 className="font-display" style={{ fontSize: 28, fontWeight: 800, color: 'var(--fg)', letterSpacing: 1, marginBottom: 8 }}>STAY INFORMED</h2>
             <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 24, maxWidth: 380, margin: '0 auto 24px' }}>Immediate alerts when new Andes virus cases are confirmed. No spam.</p>
             {subscribed ? (
-              <div className="font-mono" style={{ color: 'var(--green)', fontSize: 13 }}>✅ SUBSCRIBED — WE&apos;LL ALERT YOU IMMEDIATELY</div>
+              <div className="font-mono" style={{ color: 'var(--green)', fontSize: 13 }}>✅ SUBSCRIBED — YOU&apos;LL BE ALERTED IMMEDIATELY</div>
             ) : (
-              <div style={{ display: 'flex', gap: 8, maxWidth: 400, margin: '0 auto', flexWrap: 'wrap' }}>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com"
-                  className="font-mono" style={{ flex: 1, minWidth: 180, background: 'var(--bg)', border: '1px solid var(--line-strong)', borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 12, outline: 'none' }} />
-                <button onClick={() => email && setSubscribed(true)} style={{ background: 'var(--red)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 11, fontWeight: 700, fontFamily: 'Space Mono, monospace', letterSpacing: 1, cursor: 'pointer' }}>
-                  SUBSCRIBE
-                </button>
+              <div style={{ maxWidth: 400, margin: '0 auto' }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <input type="email" value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
+                    placeholder="your@email.com"
+                    className="font-mono"
+                    style={{ flex: 1, minWidth: 180, background: 'var(--bg)', border: `1px solid ${subError ? 'var(--red)' : 'var(--line-strong)'}`, borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 12, outline: 'none' }} />
+                  <button onClick={handleSubscribe} disabled={subscribing}
+                    style={{ background: subscribing ? 'rgba(239,68,68,0.5)' : 'var(--red)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 11, fontWeight: 700, fontFamily: 'Space Mono, monospace', letterSpacing: 1, cursor: subscribing ? 'default' : 'pointer' }}>
+                    {subscribing ? '...' : 'SUBSCRIBE'}
+                  </button>
+                </div>
+                {subError && <p className="font-mono" style={{ fontSize: 9, color: 'var(--red)', marginTop: 8, letterSpacing: 1 }}>{subError}</p>}
               </div>
             )}
           </div>
