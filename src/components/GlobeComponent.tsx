@@ -49,7 +49,7 @@ export default function GlobeComponent() {
       if (!el) return
       const w = el.clientWidth
       const isMobile = window.innerWidth < 768
-      const h = isMobile ? Math.min(w, window.innerHeight * 0.65) : Math.min(w * 0.65, 580)
+      const h = isMobile ? Math.min(w, window.innerHeight * 0.72) : Math.min(w * 0.65, 580)
       setDims({ w, h })
     }
     update()
@@ -111,15 +111,16 @@ export default function GlobeComponent() {
   )
 
   const wrapStyle: React.CSSProperties = fullscreen
-    ? { position: 'fixed', inset: 0, zIndex: 9999, background: '#060810' }
-    : { position: 'relative', width: '100%', background: '#060810', borderRadius: 12, overflow: 'hidden' }
+    ? { position: 'fixed', inset: 0, zIndex: 9999, background: '#060810', touchAction: 'none' }
+    : { position: 'relative', width: '100%', background: '#060810', borderRadius: 12, overflow: 'hidden', touchAction: 'none' }
 
   return (
     <div
       ref={containerRef}
       style={wrapStyle}
-      onTouchStart={() => setTouching(true)}
-      onTouchEnd={() => setTouching(false)}
+      onTouchStart={e => { e.stopPropagation(); setTouching(true) }}
+      onTouchEnd={e => { e.stopPropagation(); setTouching(false) }}
+      onTouchMove={e => e.stopPropagation()}
       onMouseDown={() => setTouching(true)}
       onMouseUp={() => setTouching(false)}
     >

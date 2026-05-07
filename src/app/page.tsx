@@ -219,30 +219,31 @@ export default function Home() {
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* ── NAV ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '12px 16px 0' }}>
-        <nav className="glass" style={{ maxWidth: 900, margin: '0 auto', borderRadius: 14, padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span className="font-display" style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1 }}>ANDES VIRUS</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 20, padding: '3px 8px' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '10px 12px 0' }}>
+        <nav className="glass" style={{ maxWidth: 900, margin: '0 auto', borderRadius: 12, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          {/* Logo + LIVE badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <span className="font-display" style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg)', letterSpacing: 0.5, whiteSpace: 'nowrap' }}>ANDES VIRUS</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 20, padding: '3px 7px', flexShrink: 0 }}>
               <div className="blink" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--red)' }} />
-              <span className="font-mono" style={{ fontSize: 9, color: 'var(--red)', letterSpacing: 1.5 }}>LIVE</span>
+              <span className="font-mono" style={{ fontSize: 8, color: 'var(--red)', letterSpacing: 1.5 }}>LIVE</span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <div className="hidden md:flex" style={{ gap: 20, alignItems: 'center', display: 'flex' }}>
-              {['Map', 'Risk', 'News', 'Protect'].map(l => (
-                <a key={l} href={`#${l.toLowerCase()}`} className="font-mono"
-                  style={{ fontSize: 10, color: 'var(--fg-dim)', letterSpacing: 1, textDecoration: 'none', transition: 'color 150ms' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--fg)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-dim)')}>
-                  {l.toUpperCase()}
-                </a>
-              ))}
-            </div>
-            <a href="#alerts" style={{ background: 'var(--red)', color: '#fff', borderRadius: 8, padding: '5px 10px', fontSize: 9, fontWeight: 700, letterSpacing: 0.5, textDecoration: 'none', fontFamily: 'Space Mono, monospace', whiteSpace: 'nowrap' }}>
-              GET ALERTS
-            </a>
+          {/* Desktop nav links — hidden on mobile */}
+          <div className="hidden md:flex" style={{ gap: 18, alignItems: 'center' }}>
+            {['Map', 'Risk', 'News', 'Protect'].map(l => (
+              <a key={l} href={`#${l.toLowerCase()}`} className="font-mono"
+                style={{ fontSize: 10, color: 'var(--fg-dim)', letterSpacing: 1, textDecoration: 'none', transition: 'color 150ms' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--fg)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-dim)')}>
+                {l.toUpperCase()}
+              </a>
+            ))}
           </div>
+          {/* GET ALERTS — always visible */}
+          <a href="#alerts" style={{ background: 'var(--red)', color: '#fff', borderRadius: 8, padding: '6px 12px', fontSize: 9, fontWeight: 700, letterSpacing: 0.5, textDecoration: 'none', fontFamily: 'Space Mono, monospace', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            GET ALERTS
+          </a>
         </nav>
       </div>
 
