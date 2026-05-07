@@ -376,21 +376,45 @@ export default function Home() {
         <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 8 }}>SITUATION REPORT</p>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 20 }}>CASE DATA TIMELINE</h2>
         <div style={{ border: '1px solid var(--line-strong)', borderRadius: 12, overflow: 'hidden' }}>
-          {/* Table header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 60px 60px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', padding: '10px 16px' }}>
+          {/* Desktop header — hidden on mobile */}
+          <div className="hidden md:grid" style={{ gridTemplateColumns: '120px 1fr 60px 60px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', padding: '10px 16px' }}>
             {['DATE', 'EVENT', 'CASES', 'DEATHS'].map(h => (
               <div key={h} className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', letterSpacing: 2 }}>{h}</div>
             ))}
           </div>
           {CASES.map((c, i) => (
-            <div key={i} style={{ display: 'grid', gridTemplateColumns: '120px 1fr 60px 60px', padding: '12px 16px', borderBottom: i < CASES.length - 1 ? '1px solid var(--line)' : 'none', background: 'var(--bg-1)', transition: 'background 120ms' }}>
-              <div className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)' }}>{c.date}</div>
-              <div>
-                <p style={{ fontSize: 12, color: 'var(--fg)', lineHeight: 1.4, marginBottom: 4 }}>{c.event}</p>
-                <span className="font-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, border: `1px solid ${c.color}40`, color: c.color, background: `${c.color}12`, letterSpacing: 1 }}>{c.tag} · {c.source}</span>
+            <div key={i} style={{ borderBottom: i < CASES.length - 1 ? '1px solid var(--line)' : 'none', background: 'var(--bg-1)' }}>
+              {/* Desktop row */}
+              <div className="hidden md:grid" style={{ gridTemplateColumns: '120px 1fr 60px 60px', padding: '12px 16px', alignItems: 'start' }}>
+                <div className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', paddingTop: 2 }}>{c.date}</div>
+                <div>
+                  <p style={{ fontSize: 12, color: 'var(--fg)', lineHeight: 1.4, marginBottom: 4 }}>{c.event}</p>
+                  <span className="font-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, border: `1px solid ${c.color}40`, color: c.color, background: `${c.color}12`, letterSpacing: 1 }}>{c.tag} · {c.source}</span>
+                </div>
+                <div className="font-mono" style={{ fontSize: 14, color: 'var(--amber)', fontWeight: 700 }}>{c.cases}</div>
+                <div className="font-mono" style={{ fontSize: 14, color: c.deaths > 0 ? 'var(--red)' : 'var(--fg-dim)', fontWeight: 700 }}>{c.deaths}</div>
               </div>
-              <div className="font-mono" style={{ fontSize: 14, color: 'var(--amber)', fontWeight: 700 }}>{c.cases}</div>
-              <div className="font-mono" style={{ fontSize: 14, color: c.deaths > 0 ? 'var(--red)' : 'var(--fg-dim)', fontWeight: 700 }}>{c.deaths}</div>
+              {/* Mobile card */}
+              <div className="md:hidden" style={{ padding: '14px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)' }}>{c.date}</span>
+                  <span className="font-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, border: `1px solid ${c.color}40`, color: c.color, background: `${c.color}12`, letterSpacing: 1 }}>{c.tag}</span>
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--fg)', lineHeight: 1.5, marginBottom: 10 }}>{c.event}</p>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ flex: 1, background: 'var(--bg-2)', borderRadius: 8, padding: '8px 12px', textAlign: 'center' }}>
+                    <div className="font-mono" style={{ fontSize: 18, color: 'var(--amber)', fontWeight: 700 }}>{c.cases}</div>
+                    <div className="font-mono" style={{ fontSize: 7, color: 'var(--fg-dim)', letterSpacing: 1.5, marginTop: 2 }}>CASES</div>
+                  </div>
+                  <div style={{ flex: 1, background: 'var(--bg-2)', borderRadius: 8, padding: '8px 12px', textAlign: 'center' }}>
+                    <div className="font-mono" style={{ fontSize: 18, color: c.deaths > 0 ? 'var(--red)' : 'var(--fg-dim)', fontWeight: 700 }}>{c.deaths}</div>
+                    <div className="font-mono" style={{ fontSize: 7, color: 'var(--fg-dim)', letterSpacing: 1.5, marginTop: 2 }}>DEATHS</div>
+                  </div>
+                  <div style={{ flex: 2, background: 'var(--bg-2)', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center' }}>
+                    <span className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', letterSpacing: 1 }}>{c.source}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>
