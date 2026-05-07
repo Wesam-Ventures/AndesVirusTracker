@@ -46,7 +46,10 @@ function DesktopGlobe() {
       const el = containerRef.current
       if (!el) return
       const w = el.clientWidth
-      setDims({ w, h: Math.min(w * 0.62, 560) })
+      const isMobileView = window.innerWidth < 768
+      // Mobile: taller and more square for better interaction
+      const h = isMobileView ? Math.min(w * 0.9, 480) : Math.min(w * 0.62, 560)
+      setDims({ w, h })
     }
     update()
     window.addEventListener('resize', update)
@@ -95,11 +98,14 @@ function DesktopGlobe() {
     `<div style="font-family:Space Mono,monospace;font-size:11px;color:#e2e8f0;background:#0d1014;border:1px solid rgba(148,163,184,0.2);padding:8px 12px;border-radius:8px;white-space:pre;line-height:1.6">${d.label}</div>`, [])
 
   const wrapStyle: React.CSSProperties = fullscreen
-    ? { position: 'fixed', inset: 0, zIndex: 9999, background: '#060810' }
-    : { position: 'relative', width: '100%', background: '#060810', borderRadius: 12, overflow: 'hidden' }
+    ? { position: 'fixed', inset: 0, zIndex: 9999, background: '#060810', touchAction: 'none' }
+    : { position: 'relative', width: '100%', background: '#060810', borderRadius: 12, overflow: 'hidden', touchAction: 'none' }
 
   return (
     <div ref={containerRef} style={wrapStyle}
+      onTouchStart={e => { e.stopPropagation(); setTouching(true) }}
+      onTouchEnd={e => { e.stopPropagation(); setTouching(false) }}
+      onTouchMove={e => e.stopPropagation()}
       onMouseDown={() => setTouching(true)} onMouseUp={() => setTouching(false)}>
       <Globe
         ref={globeRef} width={dims.w} height={dims.h}
@@ -146,20 +152,19 @@ function DesktopGlobe() {
   )
 }
 
-// ── Main export — picks globe vs map based on device ─────────────────────────
+// ── Main export — globe for all devices, 2D only if WebGL unavailable ────────
 export default function GlobeComponent() {
-  const [isMobile, setIsMobile] = useState(true) // default to safe 2D map
+  const [use2D, setUse2D] = useState(false)
 
   useEffect(() => {
-    const mobile = window.innerWidth < 768
+    // Only fallback to 2D if WebGL genuinely not supported
     let webglOk = false
     try {
       const canvas = document.createElement('canvas')
       webglOk = !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
     } catch {}
-    // Only use 3D globe on desktop with WebGL support
-    setIsMobile(mobile || !webglOk)
+    if (!webglOk) setUse2D(true)
   }, [])
 
-  return isMobile ? <MobileMap /> : <DesktopGlobe />
+  return use2D ? <MobileMap /> : <DesktopGlobe />
 }
