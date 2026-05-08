@@ -21,6 +21,15 @@ const jsonLd = {
   ],
 }
 
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://andesvirustracker.com' },
+    { '@type': 'ListItem', position: 2, name: 'Transmission', item: 'https://andesvirustracker.com/andes-virus-transmission' },
+  ],
+}
+
 export default function TransmissionPage() {
   const card = (title: string, body: string, color = 'var(--line-strong)') => (
     <div style={{ background: 'var(--bg-1)', border: `1px solid ${color}`, borderRadius: 10, padding: '18px' }}>
@@ -34,6 +43,7 @@ export default function TransmissionPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteNav />
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 16px 0' }}>
         <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 12 }}>TRANSMISSION GUIDE · UPDATED MAY 7, 2026</p>
 

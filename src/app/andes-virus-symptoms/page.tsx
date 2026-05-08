@@ -25,6 +25,15 @@ const jsonLd = {
   ],
 }
 
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://andesvirustracker.com' },
+    { '@type': 'ListItem', position: 2, name: 'Symptoms', item: 'https://andesvirustracker.com/andes-virus-symptoms' },
+  ],
+}
+
 const PHASES = [
   {
     phase: 'Days 1–5', label: 'PRODROMAL PHASE', color: '#f59e0b',
@@ -52,6 +61,7 @@ export default function SymptomsPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteNav />
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 16px 0' }}>
         <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 12 }}>CLINICAL GUIDE · UPDATED MAY 7, 2026</p>
 

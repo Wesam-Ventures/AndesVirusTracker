@@ -1,22 +1,14 @@
 'use client'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import StatCounter from '@/components/StatCounter'
 import SiteNav from '@/components/SiteNav'
 import SiteFooter from '@/components/SiteFooter'
-import type { OutbreakStats, OutbreakNews } from '@/lib/getOutbreakData'
+import type { OutbreakStats, OutbreakNews, OutbreakEvent } from '@/lib/getOutbreakData'
 
 const GlobeComponent = dynamic(() => import('@/components/GlobeComponent'), { ssr: false })
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
-
-const CASES = [
-  { date: 'May 7, 2026', event: 'Swiss passenger tests positive — Andes strain confirmed', cases: 8, deaths: 3, source: 'Global News', tag: 'CONFIRMED', color: '#ef4444' },
-  { date: 'May 6, 2026', event: 'WHO issues Disease Outbreak Notice — multi-country cluster', cases: 7, deaths: 3, source: 'WHO DON-599', tag: 'OFFICIAL', color: '#3b82f6' },
-  { date: 'May 5, 2026', event: 'Two additional cases confirmed, Andes strain identified', cases: 5, deaths: 2, source: 'ECDC', tag: 'CONFIRMED', color: '#ef4444' },
-  { date: 'May 3, 2026', event: 'First deaths reported aboard MV Hondius near Cape Verde', cases: 3, deaths: 1, source: 'CBC News', tag: 'MEDIA', color: '#f59e0b' },
-  { date: 'Apr 28, 2026', event: 'First cases reported — initial cluster on MV Hondius', cases: 2, deaths: 0, source: 'Oceanwide Expeditions', tag: 'SOURCE', color: '#64748b' },
-]
 
 const NEWS = [
   { source: 'WHO', tag: 'OFFICIAL', color: '#3b82f6', title: 'Multi-country cluster of Andes virus disease — Disease Outbreak Notice', date: 'May 6, 2026', url: 'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599' },
@@ -28,12 +20,19 @@ const NEWS = [
 ]
 
 const GEAR = [
-  { name: '3M P100 Half-Face Respirator', desc: 'Maximum respiratory protection against airborne particles', price: '$45–65', url: 'https://www.amazon.com/s?k=3M+P100+respirator&tag=andesvirustra-20' },
-  { name: 'N95 Respirator Masks (50-pack)', desc: 'CDC-recommended respiratory protection, NIOSH approved', price: '$25–40', url: 'https://www.amazon.com/s?k=N95+respirator+masks+50+pack&tag=andesvirustra-20' },
-  { name: 'Tyvek Protective Coverall Suit', desc: 'Full-body barrier protection for rodent cleanup', price: '$15–25', url: 'https://www.amazon.com/s?k=tyvek+coverall+suit&tag=andesvirustra-20' },
-  { name: 'Victor Snap Trap (12-pack)', desc: 'Eliminate rodent vectors around your home', price: '$15–20', url: 'https://www.amazon.com/s?k=victor+snap+trap+rodent&tag=andesvirustra-20' },
-  { name: 'Nitrile Gloves (100-pack)', desc: 'Barrier protection for cleanup operations', price: '$12–18', url: 'https://www.amazon.com/s?k=nitrile+gloves+100+pack&tag=andesvirustra-20' },
-  { name: 'Lysol Disinfectant Spray (4-pack)', desc: 'EPA-registered for rodent-contaminated surfaces', price: '$20–30', url: 'https://www.amazon.com/s?k=lysol+disinfectant+spray&tag=andesvirustra-20' },
+  { name: '3M P100 Half-Face Respirator', desc: 'Maximum respiratory protection against airborne particles', price: '$45–65', url: 'https://www.amazon.com/dp/B01CSPTIFW?tag=andesvirustra-20' },
+  { name: 'N95 Respirator Masks (50-pack)', desc: 'CDC-recommended respiratory protection, NIOSH approved', price: '$25–40', url: 'https://www.amazon.com/dp/B008MCUZZS?tag=andesvirustra-20' },
+  { name: 'Tyvek Protective Coverall Suit', desc: 'Full-body barrier protection for rodent cleanup', price: '$15–25', url: 'https://www.amazon.com/dp/B07KRXXFGZ?tag=andesvirustra-20' },
+  { name: 'Victor Snap Trap (12-pack)', desc: 'Eliminate rodent vectors around your home', price: '$15–20', url: 'https://www.amazon.com/dp/B0781YYN3F?tag=andesvirustra-20' },
+  { name: 'Nitrile Gloves (100-pack)', desc: 'Barrier protection for cleanup operations', price: '$12–18', url: 'https://www.amazon.com/dp/B0CP7GP2KW?tag=andesvirustra-20' },
+  { name: 'Lysol Disinfectant Spray (4-pack)', desc: 'EPA-registered for rodent-contaminated surfaces', price: '$20–30', url: 'https://www.amazon.com/dp/B083HL7NMC?tag=andesvirustra-20' },
+]
+
+const OTHER_OUTBREAKS = [
+  { name: 'H5N1 Bird Flu',  status: 'ACTIVE',     level: 'HIGH',     levelColor: '#ef4444', countries: 'USA · Canada · Australia · Europe', summary: 'Ongoing outbreak in US dairy cattle herds with confirmed human spillover cases. WHO monitoring for pandemic potential.', who_url: 'https://www.who.int/news-room/fact-sheets/detail/influenza-(avian-and-other-zoonotic)', cases: '70+ human',         deaths: '2' },
+  { name: 'Mpox (Clade I)', status: 'ACTIVE',     level: 'HIGH',     levelColor: '#ef4444', countries: 'DRC · Central Africa · Europe',     summary: 'Clade I mpox declared a Public Health Emergency of International Concern by WHO. Spreading in Democratic Republic of Congo and neighboring countries.', who_url: 'https://www.who.int/news-room/fact-sheets/detail/mpox', cases: '30,000+',           deaths: '1,000+' },
+  { name: 'Marburg Virus',  status: 'MONITORING', level: 'MODERATE', levelColor: '#f59e0b', countries: 'Rwanda · Tanzania · Germany',       summary: 'Periodic outbreaks in Central and East Africa. Rwanda declared outbreak contained in late 2024. Ongoing surveillance across the region.', who_url: 'https://www.who.int/news-room/fact-sheets/detail/marburg-virus-disease', cases: '66 Rwanda 2024', deaths: '15' },
+  { name: 'Dengue Fever',   status: 'ELEVATED',   level: 'MODERATE', levelColor: '#f59e0b', countries: 'Americas · SE Asia · Pacific',      summary: 'Record global dengue cases in 2024 with continued elevated transmission in 2026. Over 100 countries now endemic.', who_url: 'https://www.who.int/news-room/fact-sheets/detail/dengue-and-severe-dengue', cases: '7.6M+ (2024)',       deaths: '3,000+' },
 ]
 
 const SYMPTOMS = [
@@ -107,11 +106,11 @@ function ExposureChecker() {
           </a>
           <button onClick={() => { setStep(0); setResult(null); setAnswers({ ship: false, region: false, contact: false }) }}
             style={{ flex: 1, minWidth: 140, background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 8, padding: '10px', cursor: 'pointer' }}>
-            <div className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 1.5, marginBottom: 3 }}>RESTART</div>
+            <div className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 1.5, marginBottom: 3 }}>RESTART</div>
             <div style={{ fontSize: 11, color: 'var(--fg-mute)' }}>Check again</div>
           </button>
         </div>
-        <p className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', marginTop: 12, opacity: 0.5, textAlign: 'center' }}>
+        <p className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', marginTop: 12, opacity: 0.5, textAlign: 'center' }}>
           NOT MEDICAL ADVICE · THIS TOOL IS FOR INFORMATIONAL PURPOSES ONLY
         </p>
       </div>
@@ -127,7 +126,7 @@ function ExposureChecker() {
           <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= step ? 'var(--red)' : 'rgba(148,163,184,0.15)' }} />
         ))}
       </div>
-      <div className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 2, marginBottom: 10 }}>
+      <div className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>
         QUESTION {step + 1} OF {QUESTIONS.length}
       </div>
       <p style={{ fontSize: 14, color: 'var(--fg)', lineHeight: 1.6, marginBottom: 20, fontWeight: 500 }}>{q.q}</p>
@@ -197,7 +196,7 @@ function IncubationCalc() {
             </div>
           ))}
           <div style={{ gridColumn: '1/-1' }}>
-            <p className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', opacity: 0.5, textAlign: 'center', marginTop: 8 }}>
+            <p className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', opacity: 0.5, textAlign: 'center', marginTop: 8 }}>
               BASED ON WHO REPORTED INCUBATION RANGE · NOT MEDICAL ADVICE
             </p>
           </div>
@@ -207,18 +206,99 @@ function IncubationCalc() {
   )
 }
 
+// ─── SOCIAL SHARE ────────────────────────────────────────────────────────────
+
+const SHARE_PAGE_URL = 'https://andesvirustracker.com'
+const SHARE_TWEET_URL =
+  'https://twitter.com/intent/tweet?text=Live+Andes+virus+outbreak+tracker+—+8+cases%2C+3+deaths%2C+23+countries+monitoring.+The+only+hantavirus+that+spreads+person-to-person.&url=https%3A%2F%2Fandesvirustracker.com'
+const SHARE_WA_URL =
+  'https://wa.me/?text=Live+Andes+virus+outbreak+tracker%3A+https%3A%2F%2Fandesvirustracker.com'
+
+function ShareButtons() {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    console.log('[ShareButtons] copy link clicked →', SHARE_PAGE_URL)
+    try {
+      await navigator.clipboard.writeText(SHARE_PAGE_URL)
+      console.log('[ShareButtons] clipboard write OK')
+      setCopied(true)
+      setTimeout(() => {
+        console.log('[ShareButtons] reverting COPIED state')
+        setCopied(false)
+      }, 2000)
+    } catch (err) {
+      console.error('[ShareButtons] clipboard write failed', err)
+    }
+  }
+
+  const pill: React.CSSProperties = {
+    background: 'rgba(4,6,14,0.92)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    border: '1px solid rgba(148,163,184,0.2)',
+    borderRadius: 20,
+    padding: '8px 14px',
+    fontFamily: 'Space Mono, monospace',
+    fontSize: 10,
+    letterSpacing: 1.5,
+    fontWeight: 700,
+    cursor: 'pointer',
+    textDecoration: 'none',
+    textAlign: 'center',
+    whiteSpace: 'nowrap',
+  }
+
+  return (
+    <>
+      <a href={SHARE_TWEET_URL} target="_blank" rel="noopener noreferrer"
+        style={{ ...pill, color: '#1DA1F2' }}>
+        TWEET
+      </a>
+      <a href={SHARE_WA_URL} target="_blank" rel="noopener noreferrer"
+        style={{ ...pill, color: '#25D366' }}>
+        WHATSAPP
+      </a>
+      <button onClick={handleCopy}
+        style={{ ...pill, color: copied ? '#4ade80' : '#94a3b8' }}>
+        {copied ? 'COPIED!' : 'COPY LINK'}
+      </button>
+    </>
+  )
+}
+
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 interface Props {
   stats: OutbreakStats
   news: OutbreakNews[]
+  events: OutbreakEvent[]
 }
 
-export default function Home({ stats, news }: Props) {
+export default function Home({ stats: initialStats, news, events }: Props) {
+  const [stats, setStats] = useState<OutbreakStats>(initialStats)
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
   const [subscribing, setSubscribing] = useState(false)
   const [subError, setSubError] = useState('')
+
+  // Live polling — refresh stats every 5 minutes
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/andes_stats?id=eq.1&select=*`,
+          { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}` } }
+        )
+        if (res.ok) {
+          const [row] = await res.json()
+          if (row) setStats(row)
+        }
+      } catch { /* keep existing stats on error */ }
+    }
+    const id = setInterval(fetchStats, 5 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
 
   const handleSubscribe = async () => {
     if (!email || !email.includes('@')) { setSubError('Enter a valid email'); return }
@@ -247,19 +327,19 @@ export default function Home({ stats, news }: Props) {
 
       {/* ── BREAKING BANNER ── */}
       <div style={{ maxWidth: 900, margin: '12px auto', padding: '0 16px' }}>
-        <div className="hazard-stripe" style={{ border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div className="hazard-stripe" style={{ border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span className="font-mono blink" style={{ fontSize: 9, color: 'var(--red)', letterSpacing: 1.5 }}>⚠ BREAKING</span>
-            <span className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)' }}>{stats.breaking_news}</span>
+            <span className="font-mono blink" style={{ fontSize: 11, color: 'var(--red)', letterSpacing: 1.5, fontWeight: 700 }}>⚠ BREAKING</span>
+            <span className="font-mono" style={{ fontSize: 12, color: 'var(--fg)' }}>{stats.breaking_news}</span>
           </div>
-          <a href={stats.breaking_news_url} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 9, color: 'var(--red)', whiteSpace: 'nowrap', textDecoration: 'none', letterSpacing: 1 }}>READ →</a>
+          <a href={stats.breaking_news_url} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 11, color: 'var(--red)', whiteSpace: 'nowrap', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>READ →</a>
         </div>
       </div>
 
       {/* ── HERO ── */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 16px 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <p className="font-mono" style={{ fontSize: 10, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 14 }}>OUTBREAK · DAY {stats.day_count} · WHO CONFIRMED</p>
+          <p className="font-mono" style={{ fontSize: 12, color: 'var(--fg-mute)', letterSpacing: 3, marginBottom: 14 }}>OUTBREAK · DAY {stats.day_count} · WHO CONFIRMED</p>
           <h1 className="font-display" style={{ fontSize: 'clamp(28px, 7vw, 72px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: -1, color: 'var(--fg)', marginBottom: 16 }}>
             ANDES VIRUS<br /><span style={{ color: 'var(--red)' }}>TRACKER</span>
           </h1>
@@ -280,10 +360,15 @@ export default function Home({ stats, news }: Props) {
               <div className="font-display" style={{ fontSize: 44, fontWeight: 800, color: s.color, lineHeight: 1, marginBottom: 6, letterSpacing: -1 }}>
                 <StatCounter target={s.value} suffix={s.suffix} />
               </div>
-              <div className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', letterSpacing: 2 }}>{s.label}</div>
-              <div className="font-mono" style={{ fontSize: 7, color: 'var(--fg-dim)', marginTop: 6, borderTop: '1px dashed var(--line-strong)', paddingTop: 6, opacity: 0.5 }}>SOURCE: WHO/ECDC</div>
+              <div className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 1.5 }}>{s.label}</div>
+              <div className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 6, borderTop: '1px dashed var(--line-strong)', paddingTop: 6 }}>SOURCE: WHO/ECDC</div>
             </div>
           ))}
+        </div>
+
+        {/* MOBILE SHARE ROW — desktop uses fixed bar at bottom-right */}
+        <div className="flex md:hidden" style={{ justifyContent: 'center', gap: 6, marginTop: 16 }}>
+          <ShareButtons />
         </div>
 
         {/* SECONDARY ROW */}
@@ -294,7 +379,7 @@ export default function Home({ stats, news }: Props) {
             { label: 'ACTIVE VESSEL',       value: 'MV HONDIUS', color: 'var(--blue)' },
           ].map(s => (
             <div key={s.label} style={{ background: 'var(--bg-1)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 1.5 }}>{s.label}</span>
+              <span className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1.5 }}>{s.label}</span>
               <span className="font-mono" style={{ fontSize: 11, color: s.color, fontWeight: 700 }}>{s.value}</span>
             </div>
           ))}
@@ -309,7 +394,7 @@ export default function Home({ stats, news }: Props) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
             </div>
             <div>
-              <div className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', letterSpacing: 2 }}>WHO ASSESSMENT</div>
+              <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 2 }}>WHO ASSESSMENT</div>
               <div className="font-mono" style={{ fontSize: 9, color: 'var(--blue)', letterSpacing: 1, marginTop: 2 }}>OFFICIAL RISK LEVEL</div>
             </div>
           </div>
@@ -331,31 +416,30 @@ export default function Home({ stats, news }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '0 0 auto' }}>
             <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, padding: '6px 14px', textAlign: 'center' }}>
               <div className="font-mono" style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', letterSpacing: 2 }}>{stats.who_risk_level}</div>
-              <div className="font-mono" style={{ fontSize: 7, color: 'var(--fg-dim)', letterSpacing: 1, marginTop: 2 }}>P2P CONFIRMED</div>
+              <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1, marginTop: 2 }}>P2P CONFIRMED</div>
             </div>
             <a href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599" target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 8, color: 'var(--blue)', letterSpacing: 1, textDecoration: 'none' }}>WHO →</a>
           </div>
         </div>
       </div>
 
-      {/* ── GLOBE — full width on mobile ── */}
-      <div id="map" style={{ margin: '48px 0 0' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px', marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* ── GLOBE ── */}
+      <div id="map" style={{ margin: '64px 0 0' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px', marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <div>
-              <h2 className="font-display" style={{ fontSize: 16, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1 }}>LIVE OUTBREAK MAP</h2>
-              <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 1, marginTop: 4 }}>14 ACTIVE SIGNALS · TAP EXPAND FOR FULLSCREEN</p>
+              <h2 className="font-display" style={{ fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, color: 'var(--fg)', letterSpacing: -0.5, lineHeight: 1 }}>LIVE OUTBREAK MAP</h2>
+              <p className="font-mono" style={{ fontSize: 12, color: 'var(--fg-mute)', letterSpacing: 1, marginTop: 6 }}>Interactive 3D globe · 16 active signals · Drag to explore</p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} className="blink" />
-              <span className="font-mono" style={{ fontSize: 9, color: 'var(--green)', letterSpacing: 1.5 }}>AIS LIVE</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 20, padding: '6px 14px' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 8px #4ade80' }} className="blink" />
+              <span className="font-mono" style={{ fontSize: 12, color: '#4ade80', letterSpacing: 1.5, fontWeight: 700 }}>AIS LIVE</span>
             </div>
           </div>
         </div>
-        {/* Globe breaks out of max-width on mobile */}
-        <div style={{ padding: '0 0 0 0' }} className="md:px-4">
+        <div className="md:px-4">
           <div style={{ maxWidth: 932, margin: '0 auto' }}>
-            <div style={{ border: '1px solid var(--line-strong)', borderRadius: 0, overflow: 'hidden' }} className="md:rounded-xl">
+            <div style={{ border: '1px solid rgba(239,68,68,0.25)', borderRadius: 0, overflow: 'hidden', minHeight: 620, boxShadow: '0 0 60px rgba(239,68,68,0.12), inset 0 0 80px rgba(0,0,0,0.6)' }} className="md:rounded-2xl">
               <GlobeComponent />
             </div>
           </div>
@@ -364,7 +448,7 @@ export default function Home({ stats, news }: Props) {
 
       {/* ── EXPOSURE RISK CHECKER ── */}
       <div {...section('risk')}>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 8 }}>PERSONAL RISK ASSESSMENT</p>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>PERSONAL RISK ASSESSMENT</p>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 6 }}>ARE YOU AT RISK?</h2>
         <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 20 }}>Answer 3 questions to assess your personal exposure risk. Takes 30 seconds.</p>
         <ExposureChecker />
@@ -372,57 +456,59 @@ export default function Home({ stats, news }: Props) {
 
       {/* ── SITUATION REPORT TABLE ── */}
       <div {...section()}>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 8 }}>SITUATION REPORT</p>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>SITUATION REPORT</p>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 20 }}>CASE DATA TIMELINE</h2>
         <div style={{ border: '1px solid var(--line-strong)', borderRadius: 12, overflow: 'hidden' }}>
           {/* Desktop header — hidden on mobile */}
           <div className="hidden md:grid" style={{ gridTemplateColumns: '120px 1fr 60px 60px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', padding: '10px 16px' }}>
             {['DATE', 'EVENT', 'CASES', 'DEATHS'].map(h => (
-              <div key={h} className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', letterSpacing: 2 }}>{h}</div>
+              <div key={h} className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 2 }}>{h}</div>
             ))}
           </div>
-          {CASES.map((c, i) => (
-            <div key={i} style={{ borderBottom: i < CASES.length - 1 ? '1px solid var(--line)' : 'none', background: 'var(--bg-1)' }}>
+          {events.map((e, i) => {
+            const date = new Date(e.event_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            return (
+            <div key={e.id} style={{ borderBottom: i < events.length - 1 ? '1px solid var(--line)' : 'none', background: 'var(--bg-1)' }}>
               {/* Desktop row */}
               <div className="hidden md:grid" style={{ gridTemplateColumns: '120px 1fr 60px 60px', padding: '12px 16px', alignItems: 'start' }}>
-                <div className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', paddingTop: 2 }}>{c.date}</div>
+                <div className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', paddingTop: 2 }}>{date}</div>
                 <div>
-                  <p style={{ fontSize: 12, color: 'var(--fg)', lineHeight: 1.4, marginBottom: 4 }}>{c.event}</p>
-                  <span className="font-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, border: `1px solid ${c.color}40`, color: c.color, background: `${c.color}12`, letterSpacing: 1 }}>{c.tag} · {c.source}</span>
+                  <p style={{ fontSize: 12, color: 'var(--fg)', lineHeight: 1.4, marginBottom: 4 }}>{e.event}</p>
+                  <span className="font-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, border: `1px solid ${e.tag_color}40`, color: e.tag_color, background: `${e.tag_color}12`, letterSpacing: 1 }}>{e.tag} · {e.source}</span>
                 </div>
-                <div className="font-mono" style={{ fontSize: 14, color: 'var(--amber)', fontWeight: 700 }}>{c.cases}</div>
-                <div className="font-mono" style={{ fontSize: 14, color: c.deaths > 0 ? 'var(--red)' : 'var(--fg-dim)', fontWeight: 700 }}>{c.deaths}</div>
+                <div className="font-mono" style={{ fontSize: 14, color: 'var(--amber)', fontWeight: 700 }}>{e.cases}</div>
+                <div className="font-mono" style={{ fontSize: 14, color: e.deaths > 0 ? 'var(--red)' : 'var(--fg-dim)', fontWeight: 700 }}>{e.deaths}</div>
               </div>
               {/* Mobile card */}
               <div className="md:hidden" style={{ padding: '14px 14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)' }}>{c.date}</span>
-                  <span className="font-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, border: `1px solid ${c.color}40`, color: c.color, background: `${c.color}12`, letterSpacing: 1 }}>{c.tag}</span>
+                  <span className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)' }}>{date}</span>
+                  <span className="font-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, border: `1px solid ${e.tag_color}40`, color: e.tag_color, background: `${e.tag_color}12`, letterSpacing: 1 }}>{e.tag}</span>
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--fg)', lineHeight: 1.5, marginBottom: 10 }}>{c.event}</p>
+                <p style={{ fontSize: 13, color: 'var(--fg)', lineHeight: 1.5, marginBottom: 10 }}>{e.event}</p>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <div style={{ flex: 1, background: 'var(--bg-2)', borderRadius: 8, padding: '8px 12px', textAlign: 'center' }}>
-                    <div className="font-mono" style={{ fontSize: 18, color: 'var(--amber)', fontWeight: 700 }}>{c.cases}</div>
-                    <div className="font-mono" style={{ fontSize: 7, color: 'var(--fg-dim)', letterSpacing: 1.5, marginTop: 2 }}>CASES</div>
+                    <div className="font-mono" style={{ fontSize: 18, color: 'var(--amber)', fontWeight: 700 }}>{e.cases}</div>
+                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1.5, marginTop: 2 }}>CASES</div>
                   </div>
                   <div style={{ flex: 1, background: 'var(--bg-2)', borderRadius: 8, padding: '8px 12px', textAlign: 'center' }}>
-                    <div className="font-mono" style={{ fontSize: 18, color: c.deaths > 0 ? 'var(--red)' : 'var(--fg-dim)', fontWeight: 700 }}>{c.deaths}</div>
-                    <div className="font-mono" style={{ fontSize: 7, color: 'var(--fg-dim)', letterSpacing: 1.5, marginTop: 2 }}>DEATHS</div>
+                    <div className="font-mono" style={{ fontSize: 18, color: e.deaths > 0 ? 'var(--red)' : 'var(--fg-dim)', fontWeight: 700 }}>{e.deaths}</div>
+                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1.5, marginTop: 2 }}>DEATHS</div>
                   </div>
                   <div style={{ flex: 2, background: 'var(--bg-2)', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center' }}>
-                    <span className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', letterSpacing: 1 }}>{c.source}</span>
+                    <span className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1 }}>{e.source}</span>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
-        <p className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', marginTop: 10, opacity: 0.5 }}>DATA SOURCED FROM WHO, ECDC, AND CREDIBLE MEDIA REPORTS</p>
+        <p className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', marginTop: 10, opacity: 0.5 }}>DATA SOURCED FROM WHO, ECDC, AND CREDIBLE MEDIA REPORTS</p>
       </div>
 
       {/* ── INCUBATION CALCULATOR ── */}
       <div {...section()}>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 8 }}>EXPOSURE TIMELINE TOOL</p>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>EXPOSURE TIMELINE TOOL</p>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 6 }}>INCUBATION CALCULATOR</h2>
         <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 20 }}>If you were potentially exposed, calculate when symptoms could appear based on WHO-published incubation data.</p>
         <IncubationCalc />
@@ -430,7 +516,7 @@ export default function Home({ stats, news }: Props) {
 
       {/* ── SYMPTOMS ── */}
       <div {...section()}>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 8 }}>CLINICAL PROFILE</p>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>CLINICAL PROFILE</p>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 20 }}>SYMPTOMS BY PHASE</h2>
         <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 8 }}>
           {SYMPTOMS.map(ph => (
@@ -456,7 +542,7 @@ export default function Home({ stats, news }: Props) {
 
       {/* ── NEWS ── */}
       <div {...section('news')}>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 8 }}>INTELLIGENCE FEED</p>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>INTELLIGENCE FEED</p>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 20 }}>LATEST UPDATES</h2>
         <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 1, background: 'var(--line)' }}>
           {(news.length > 0 ? news : NEWS).map(n => {
@@ -474,8 +560,8 @@ export default function Home({ stats, news }: Props) {
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-1)')}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
                 <span className="font-mono" style={{ fontSize: 8, letterSpacing: 1.5, padding: '2px 6px', borderRadius: 4, border: `1px solid ${color}`, color, background: `${color}18` }}>{tag}</span>
-                <span className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)' }}>{source}</span>
-                <span className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', marginLeft: 'auto' }}>{date}</span>
+                <span className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)' }}>{source}</span>
+                <span className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', marginLeft: 'auto' }}>{date}</span>
               </div>
               <p style={{ fontSize: 13, color: 'var(--fg)', lineHeight: 1.5, fontWeight: 500 }}>{title}</p>
               <span className="font-mono" style={{ fontSize: 9, color: 'var(--red)', letterSpacing: 1, display: 'block', marginTop: 8 }}>READ →</span>
@@ -487,7 +573,7 @@ export default function Home({ stats, news }: Props) {
 
       {/* ── PROTECT YOURSELF ── */}
       <div {...section('protect')}>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 8 }}>PROTECTIVE EQUIPMENT</p>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>PROTECTIVE EQUIPMENT</p>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 4 }}>PROTECT YOURSELF</h2>
         <p style={{ fontSize: 12, color: 'var(--fg-dim)', marginBottom: 20 }}>Affiliate links support this free tracker. Prices approximate.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3" style={{ gap: 1, background: 'var(--line)' }}>
@@ -501,17 +587,51 @@ export default function Home({ stats, news }: Props) {
               <p style={{ fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1.5, marginBottom: 12 }}>{g.desc}</p>
               <div style={{ borderTop: '1px dashed var(--line-strong)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="font-mono" style={{ fontSize: 11, color: 'var(--green)', fontWeight: 700 }}>{g.price}</span>
-                <span className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 1 }}>VIEW →</span>
+                <span className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 1 }}>VIEW →</span>
               </div>
             </a>
           ))}
         </div>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', marginTop: 10, opacity: 0.5 }}>Amazon Associate · Prices vary · Not medical advice</p>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 10, opacity: 0.5 }}>Amazon Associate · Prices vary · Not medical advice</p>
+      </div>
+
+      {/* ── SUPPORT THIS TRACKER ── */}
+      <div {...section('support')}>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>INDEPENDENT TRACKER</p>
+        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 6 }}>KEEP THIS FREE</h2>
+        <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 20 }}>This tracker is independently operated. No paywalls, no ads beyond affiliate links. If it helped you, consider supporting the work.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 1, background: 'var(--line)' }}>
+          {/* Stripe donate */}
+          <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_LINK" target="_blank" rel="noopener noreferrer"
+            style={{ background: 'var(--bg-1)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: 10, padding: '16px', display: 'block', textDecoration: 'none', transition: 'background 120ms' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-1)')}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span className="font-mono" style={{ fontSize: 9, color: '#f59e0b', letterSpacing: 1.5 }}>SUPPORT THIS TRACKER</span>
+              <span style={{ fontSize: 18 }} aria-hidden>⚡</span>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 600, lineHeight: 1.4, marginBottom: 6 }}>One-time tip via Stripe</p>
+            <p style={{ fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1.5 }}>$3 · $5 · $10 → your call</p>
+          </a>
+
+          {/* Share the tracker */}
+          <div
+            style={{ background: 'var(--bg-1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 10, padding: '16px', display: 'block', transition: 'background 120ms' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-1)')}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span className="font-mono" style={{ fontSize: 9, color: 'var(--green)', letterSpacing: 1.5 }}>SHARE THE TRACKER</span>
+              <span style={{ fontSize: 18 }} aria-hidden>📡</span>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 600, lineHeight: 1.4, marginBottom: 6 }}>Tell someone who needs to know</p>
+            <p style={{ fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1.5 }}>Every share = more people informed</p>
+          </div>
+        </div>
       </div>
 
       {/* ── FAQ ── */}
       <div {...section()}>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 8 }}>INTELLIGENCE · FAQ</p>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>INTELLIGENCE · FAQ</p>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 20 }}>FREQUENTLY ASKED</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: 'var(--line)' }}>
           {FAQS.map(faq => (
@@ -556,6 +676,46 @@ export default function Home({ stats, news }: Props) {
             )}
           </div>
         </div>
+      </div>
+
+      {/* ── OTHER ACTIVE OUTBREAKS ── */}
+      <div {...section('other-outbreaks')}>
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>GLOBAL SURVEILLANCE</p>
+        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 6 }}>OTHER ACTIVE OUTBREAKS</h2>
+        <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 20 }}>We track Andes virus. These are the other outbreaks public health authorities are actively monitoring worldwide.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 8 }}>
+          {OTHER_OUTBREAKS.map(o => (
+            <div key={o.name} className="card-corner" style={{ background: 'var(--bg-1)', border: `1px solid ${o.levelColor}30`, borderRadius: 10, padding: '18px', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--fg)' }}>{o.name}</div>
+                <span className="font-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, border: `1px solid ${o.levelColor}40`, color: o.levelColor, background: `${o.levelColor}12`, letterSpacing: 1, whiteSpace: 'nowrap' }}>
+                  {o.status} · {o.level}
+                </span>
+              </div>
+              <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1, marginBottom: 12 }}>{o.countries}</div>
+              <p style={{ fontSize: 12, color: 'var(--fg-mute)', lineHeight: 1.6, marginBottom: 14 }}>{o.summary}</p>
+              <div style={{ marginTop: 'auto', borderTop: '1px dashed var(--line-strong)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 14 }}>
+                  <div>
+                    <div className="font-mono" style={{ fontSize: 13, color: 'var(--amber)', fontWeight: 700 }}>{o.cases}</div>
+                    <div className="font-mono" style={{ fontSize: 8, color: 'var(--fg-mute)', letterSpacing: 1.5, marginTop: 2 }}>CASES</div>
+                  </div>
+                  <div>
+                    <div className="font-mono" style={{ fontSize: 13, color: 'var(--red)', fontWeight: 700 }}>{o.deaths}</div>
+                    <div className="font-mono" style={{ fontSize: 8, color: 'var(--fg-mute)', letterSpacing: 1.5, marginTop: 2 }}>DEATHS</div>
+                  </div>
+                </div>
+                <a href={o.who_url} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 10, color: 'var(--blue)', letterSpacing: 1.5, textDecoration: 'none', fontWeight: 700 }}>WHO →</a>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', marginTop: 10, opacity: 0.5 }}>DATA SOURCED FROM WHO, CDC, AND ECDC · UPDATED PERIODICALLY</p>
+      </div>
+
+      {/* DESKTOP STICKY SHARE BAR — mobile uses inline row below hero stats */}
+      <div className="hidden md:flex" style={{ position: 'fixed', bottom: 24, right: 16, zIndex: 100, flexDirection: 'column', gap: 6 }}>
+        <ShareButtons />
       </div>
 
       <SiteFooter />

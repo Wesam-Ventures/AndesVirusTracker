@@ -21,12 +21,22 @@ const jsonLd = {
   ],
 }
 
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://andesvirustracker.com' },
+    { '@type': 'ListItem', position: 2, name: 'Incubation Period', item: 'https://andesvirustracker.com/andes-virus-incubation-period' },
+  ],
+}
+
 export default function IncubationPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteNav />
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 16px 0' }}>
         <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 12 }}>INCUBATION DATA · SOURCE: WHO/CDC</p>
 

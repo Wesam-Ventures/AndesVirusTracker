@@ -19,6 +19,15 @@ const jsonLd = {
   ],
 }
 
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://andesvirustracker.com' },
+    { '@type': 'ListItem', position: 2, name: 'Andes vs Hantavirus', item: 'https://andesvirustracker.com/andes-virus-vs-hantavirus' },
+  ],
+}
+
 const STRAINS = [
   { name: 'Andes Virus (ANDV)', region: 'South America', p2p: true, cfr: '~40%', disease: 'HPS', reservoir: 'Long-tailed pygmy rice rat', highlight: true },
   { name: 'Sin Nombre Virus', region: 'North America', p2p: false, cfr: '~36%', disease: 'HPS', reservoir: 'Deer mouse (Peromyscus maniculatus)', highlight: false },
@@ -33,6 +42,7 @@ export default function VsHantavirusPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteNav />
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 16px 0' }}>
         <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 12 }}>VIRUS COMPARISON · UPDATED MAY 7, 2026</p>
 

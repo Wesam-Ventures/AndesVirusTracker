@@ -1,9 +1,0 @@
-# *
-User-agent: *
-Allow: /
-
-# Host
-Host: https://andesvirustracker.com
-
-# Sitemaps
-Sitemap: https://andesvirustracker.com/sitemap.xml

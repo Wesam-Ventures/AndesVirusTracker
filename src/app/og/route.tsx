@@ -3,7 +3,51 @@ import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
+type AndesStats = {
+  confirmed_cases: number
+  deaths: number
+  countries_monitoring: number
+}
+
 export async function GET(req: NextRequest) {
+  let stats: AndesStats = {
+    confirmed_cases: 8,
+    deaths: 3,
+    countries_monitoring: 23,
+  }
+
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables')
+    }
+
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/andes_stats?select=confirmed_cases,deaths,countries_monitoring&id=eq.1`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Supabase stats fetch failed: ${response.status}`)
+    }
+
+    const [row] = (await response.json()) as AndesStats[]
+
+    if (row) {
+      stats = row
+      console.log('[og/route.tsx] loaded Andes stats', stats)
+    }
+  } catch (error) {
+    console.log('[og/route.tsx] using fallback Andes stats', error)
+  }
+
   const { searchParams } = new URL(req.url)
   const title = searchParams.get('title') || 'Andes Virus Tracker'
   const sub = searchParams.get('sub') || '8 cases · 3 deaths · 23 countries monitoring'
@@ -58,7 +102,12 @@ export async function GET(req: NextRequest) {
 
         {/* Stats row */}
         <div style={{ display: 'flex', gap: '40px' }}>
-          {[['8', 'CASES'], ['3', 'DEATHS'], ['23', 'COUNTRIES'], ['40%', 'FATALITY RATE']].map(([v, l]) => (
+          {[
+            [String(stats.confirmed_cases), 'CASES'],
+            [String(stats.deaths), 'DEATHS'],
+            [String(stats.countries_monitoring), 'COUNTRIES'],
+            ['40%', 'FATALITY RATE'],
+          ].map(([v, l]) => (
             <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '36px', fontWeight: 800, color: '#ef4444' }}>{v}</span>
               <span style={{ fontSize: '11px', color: '#64748b', letterSpacing: '2px' }}>{l}</span>

@@ -24,23 +24,24 @@ export default function SiteNav() {
 
           {/* Logo + LIVE */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <Link href="/" className="font-display" style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg)', letterSpacing: 0.5, whiteSpace: 'nowrap', textDecoration: 'none' }}>
+            <Link href="/" className="font-display" style={{ fontSize: 15, fontWeight: 700, color: 'var(--fg)', letterSpacing: 0.5, whiteSpace: 'nowrap', textDecoration: 'none' }}>
               ANDES VIRUS
             </Link>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 20, padding: '3px 7px', flexShrink: 0 }}>
-              <div className="blink" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--red)' }} />
-              <span className="font-mono" style={{ fontSize: 8, color: 'var(--red)', letterSpacing: 1.5 }}>LIVE</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 20, padding: '3px 8px', flexShrink: 0 }}>
+              <div className="blink" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)' }} />
+              <span className="font-mono" style={{ fontSize: 10, color: 'var(--red)', letterSpacing: 1.5 }}>LIVE</span>
             </div>
           </div>
 
           {/* Desktop links */}
-          <div className="hidden md:flex" style={{ gap: 14, alignItems: 'center' }}>
+          <div className="hidden md:flex" style={{ gap: 16, alignItems: 'center' }}>
             {NAV_LINKS.map(l => (
               <Link key={l.href} href={l.href} className="font-mono" style={{
-                fontSize: 9, letterSpacing: 1, textDecoration: 'none', whiteSpace: 'nowrap',
-                color: path === l.href ? 'var(--red)' : 'var(--fg-dim)',
-                paddingBottom: 1,
+                fontSize: 11, letterSpacing: 0.5, textDecoration: 'none', whiteSpace: 'nowrap',
+                color: path === l.href ? 'var(--red)' : 'var(--fg-mute)',
+                paddingBottom: 2,
                 borderBottom: path === l.href ? '1px solid var(--red)' : '1px solid transparent',
+                transition: 'color 0.15s',
               }}>
                 {l.label.toUpperCase()}
               </Link>
@@ -57,17 +58,17 @@ export default function SiteNav() {
               aria-label="Menu"
             >
               {open ? (
-                <span style={{ fontFamily: 'Space Mono', fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1 }}>✕</span>
+                <span style={{ fontFamily: 'Space Mono', fontSize: 13, color: 'var(--fg)', lineHeight: 1 }}>✕</span>
               ) : (
                 <>
-                  <div style={{ width: 16, height: 1.5, background: 'var(--fg-mute)', borderRadius: 1 }} />
-                  <div style={{ width: 12, height: 1.5, background: 'var(--fg-mute)', borderRadius: 1 }} />
-                  <div style={{ width: 16, height: 1.5, background: 'var(--fg-mute)', borderRadius: 1 }} />
+                  <div style={{ width: 16, height: 2, background: 'var(--fg)', borderRadius: 1 }} />
+                  <div style={{ width: 12, height: 2, background: 'var(--fg)', borderRadius: 1 }} />
+                  <div style={{ width: 16, height: 2, background: 'var(--fg)', borderRadius: 1 }} />
                 </>
               )}
             </button>
 
-            <Link href="/#alerts" style={{ background: 'var(--red)', color: '#fff', borderRadius: 8, padding: '6px 12px', fontSize: 9, fontWeight: 700, letterSpacing: 0.5, textDecoration: 'none', fontFamily: 'Space Mono, monospace', whiteSpace: 'nowrap' }}>
+            <Link href="/#alerts" style={{ background: 'var(--red)', color: '#fff', borderRadius: 8, padding: '7px 14px', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textDecoration: 'none', fontFamily: 'Space Mono, monospace', whiteSpace: 'nowrap' }}>
               GET ALERTS
             </Link>
           </div>

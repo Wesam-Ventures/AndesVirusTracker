@@ -32,15 +32,16 @@ const newsJsonLd = [
     mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://andesvirustracker.com/andes-virus-news' },
     image: 'https://andesvirustracker.com/og?title=Andes+Virus+News+2026',
   },
-  {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://andesvirustracker.com' },
-      { '@type': 'ListItem', position: 2, name: 'Andes Virus News', item: 'https://andesvirustracker.com/andes-virus-news' },
-    ],
-  },
 ]
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://andesvirustracker.com' },
+    { '@type': 'ListItem', position: 2, name: 'News', item: 'https://andesvirustracker.com/andes-virus-news' },
+  ],
+}
 
 const TIMELINE = [
   {
@@ -88,6 +89,8 @@ export default function NewsPage() {
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
       ))}
       <SiteNav />
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 16px 0' }}>
         <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 12 }}>OUTBREAK TIMELINE · UPDATED MAY 7, 2026</p>
         <h1 className="font-display" style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, color: 'var(--fg)', letterSpacing: 0.5, lineHeight: 1.1, marginBottom: 8 }}>

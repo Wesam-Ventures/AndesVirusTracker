@@ -1,4 +1,4 @@
-const URL = 'https://mzkjeogwlvibfcixxqns.supabase.co/rest/v1'
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1'
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 const headers = {
@@ -28,6 +28,17 @@ export interface OutbreakNews {
   tag: string
   tag_color: string
   published_at: string
+}
+
+export interface OutbreakEvent {
+  id: number
+  event_date: string
+  event: string
+  cases: number
+  deaths: number
+  source: string
+  tag: string
+  tag_color: string
 }
 
 export async function getOutbreakStats(): Promise<OutbreakStats> {
@@ -62,6 +73,19 @@ export async function getOutbreakNews(): Promise<OutbreakNews[]> {
       next: { revalidate: 60 },
     })
     if (!res.ok) throw new Error('Failed to fetch news')
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+export async function getOutbreakEvents(): Promise<OutbreakEvent[]> {
+  try {
+    const res = await fetch(`${URL}/andes_events?select=*&order=event_date.desc`, {
+      headers,
+      next: { revalidate: 60 },
+    })
+    if (!res.ok) throw new Error('Failed to fetch events')
     return await res.json()
   } catch {
     return []
