@@ -28,6 +28,7 @@ export interface OutbreakNews {
   tag: string
   tag_color: string
   published_at: string
+  image_url?: string
 }
 
 export interface OutbreakEvent {

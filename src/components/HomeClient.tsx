@@ -8,6 +8,16 @@ import type { OutbreakStats, OutbreakNews, OutbreakEvent } from '@/lib/getOutbre
 
 const GlobeComponent = dynamic(() => import('@/components/GlobeComponent'), { ssr: false })
 
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+const getDomain = (url: string): string => {
+  try {
+    return new URL(url).hostname.replace('www.', '')
+  } catch {
+    return ''
+  }
+}
+
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
 const NEWS = [
@@ -20,7 +30,7 @@ const NEWS = [
 ]
 
 const GEAR = [
-  { icon: '🫁', name: '3M P100 Half-Face Respirator', desc: 'Maximum respiratory protection against airborne particles', price: '$45–65', url: 'https://www.amazon.com/dp/B01CSPTIFW?tag=andesvirustra-20' },
+  { icon: '🫁', name: '3M P100 Half-Face Respirator', desc: 'Maximum respiratory protection against airborne particles', price: '$45–65', url: 'https://www.amazon.com/s?k=3M+6502QL+P100+half+face+respirator&tag=andesvirustra-20' },
   { icon: '😷', name: 'N95 Respirator Masks (50-pack)', desc: 'CDC-recommended respiratory protection, NIOSH approved', price: '$25–40', url: 'https://www.amazon.com/dp/B008MCUZZS?tag=andesvirustra-20' },
   { icon: '🥼', name: 'Tyvek Protective Coverall Suit', desc: 'Full-body barrier protection for rodent cleanup', price: '$15–25', url: 'https://www.amazon.com/dp/B07KRXXFGZ?tag=andesvirustra-20' },
   { icon: '🐭', name: 'Victor Snap Trap (12-pack)', desc: 'Eliminate rodent vectors around your home', price: '$15–20', url: 'https://www.amazon.com/dp/B0781YYN3F?tag=andesvirustra-20' },
@@ -332,7 +342,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
             <span className="font-mono blink" style={{ fontSize: 12, color: 'var(--red)', letterSpacing: 1.5, fontWeight: 700 }}>⚠ BREAKING</span>
             <span className="font-mono" style={{ fontSize: 12, color: 'var(--fg)' }}>{stats.breaking_news}</span>
           </div>
-          <a href={stats.breaking_news_url} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 11, color: 'var(--red)', whiteSpace: 'nowrap', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>READ →</a>
+          <a href={stats.breaking_news_url.replace(/&amp;/g, '&')} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 11, color: 'var(--red)', whiteSpace: 'nowrap', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>READ →</a>
         </div>
       </div>
 
@@ -562,18 +572,49 @@ export default function Home({ stats: initialStats, news, events }: Props) {
             const color = isLive ? (n as any).tag_color : (n as any).color
             const source = isLive ? (n as any).source_label : (n as any).source
             const date = isLive ? new Date((n as any).published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : (n as any).date
+            const imageUrl = isLive ? (n as any).image_url : undefined
+            const domain = getDomain(url)
+            console.log('[news-card] render', { title, isLive, hasImage: !!imageUrl, domain })
             return (
             <a key={title} href={url} target="_blank" rel="noopener noreferrer"
-              style={{ background: 'var(--bg-1)', padding: '16px', display: 'block', textDecoration: 'none', transition: 'background 120ms' }}
+              style={{ background: 'var(--bg-1)', display: 'block', textDecoration: 'none', transition: 'background 120ms', borderLeft: `3px solid ${color}` }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-2)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-1)')}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-                <span className="font-mono" style={{ fontSize: 8, letterSpacing: 1.5, padding: '2px 6px', borderRadius: 4, border: `1px solid ${color}`, color, background: `${color}18` }}>{tag}</span>
-                <span className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)' }}>{source}</span>
-                <span className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', marginLeft: 'auto' }}>{date}</span>
+              {imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imageUrl}
+                  alt=""
+                  onError={(e) => {
+                    console.log('[news-cover] failed to load:', imageUrl)
+                    e.currentTarget.style.display = 'none'
+                  }}
+                  style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}
+                />
+              )}
+              <div style={{ padding: 14 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+                  <span className="font-mono" style={{ fontSize: 8, letterSpacing: 1.5, padding: '2px 6px', borderRadius: 4, border: `1px solid ${color}`, color, background: `${color}18` }}>{tag}</span>
+                  <span className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', display: 'inline-flex', alignItems: 'center' }}>
+                    {domain && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`https://logo.clearbit.com/${domain}`}
+                        alt=""
+                        onError={(e) => {
+                          console.log('[news-logo] failed to load:', domain)
+                          e.currentTarget.style.display = 'none'
+                        }}
+                        style={{ width: 14, height: 14, borderRadius: 2, marginRight: 4, verticalAlign: 'middle', objectFit: 'cover' }}
+                      />
+                    )}
+                    {source}
+                  </span>
+                  <span className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', marginLeft: 'auto' }}>{date}</span>
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--fg)', lineHeight: 1.5, fontWeight: 500 }}>{title}</p>
+                <span className="font-mono" style={{ fontSize: 9, color: 'var(--red)', letterSpacing: 1, display: 'block', marginTop: 8 }}>READ →</span>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--fg)', lineHeight: 1.5, fontWeight: 500 }}>{title}</p>
-              <span className="font-mono" style={{ fontSize: 9, color: 'var(--red)', letterSpacing: 1, display: 'block', marginTop: 8 }}>READ →</span>
             </a>
           )})}
           {news.length > 0 && <div style={{ gridColumn: '1/-1', background: 'var(--bg-1)', padding: '12px 16px', textAlign: 'center' }}><a href="/andes-virus-news" className="font-mono" style={{ fontSize: 9, color: 'var(--blue)', letterSpacing: 1, textDecoration: 'none' }}>VIEW FULL TIMELINE →</a></div>}

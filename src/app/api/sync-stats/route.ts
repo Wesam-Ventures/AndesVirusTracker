@@ -73,6 +73,34 @@ async function fetchWHORiskLevel(): Promise<string | null> {
   return null
 }
 
+// MARK: - OG image fetcher
+// Fetches an article URL with a 4s timeout and returns the og:image URL, or null on
+// any failure (network error, timeout, missing meta tag, non-OK response).
+async function fetchOGImage(url: string): Promise<string | null> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 4000)
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'AndesVirusTracker/1.0' },
+    })
+    if (!res.ok) {
+      console.log('[sync-stats] og:image fetch non-OK', res.status, url)
+      return null
+    }
+    const html = await res.text()
+    const match =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+    return match ? match[1] : null
+  } catch (err) {
+    console.log('[sync-stats] og:image fetch error', url, err instanceof Error ? err.message : err)
+    return null
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 async function fetchFeed(url: string): Promise<{ title: string; summary: string; url: string; date: string }[]> {
   try {
     const res = await fetch(url, { headers: { 'User-Agent': 'AndesVirusTracker/1.0' }, next: { revalidate: 0 } })
@@ -88,7 +116,7 @@ async function fetchFeed(url: string): Promise<{ title: string; summary: string;
       const title = rawTitle.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/<[^>]+>/g, '').trim()
       const summary = (entry.match(/<summary[^>]*>([\s\S]*?)<\/summary>/) || [])[1]?.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/<[^>]+>/g, '').trim() || ''
       // Extract real URL from Google redirect (url= param) or use href directly
-      const rawLink = (entry.match(/<link[^>]+href="([^"]+)"/) || [])[1] || ''
+      const rawLink = ((entry.match(/<link[^>]+href="([^"]+)"/) || [])[1] || '').replace(/&amp;/g, '&')
       const urlParam = rawLink.match(/[?&]url=([^&]+)/)
       const link = urlParam ? decodeURIComponent(urlParam[1]) : rawLink
       const updated = (entry.match(/<updated>([\s\S]*?)<\/updated>/) || [])[1]?.trim() || ''
@@ -426,6 +454,20 @@ async function ingestRssIntoNews(
 
   console.log('[sync-stats] candidate news items:', top.length, 'of', unique.length, 'unique')
 
+  // MARK: - Pre-fetch og:image in parallel (Promise.allSettled so one failure
+  // doesn't block others). Concurrency is naturally capped at 5 because `top`
+  // is sliced to 5 above.
+  const imageResults = await Promise.allSettled(
+    top.map(item => (item.url ? fetchOGImage(item.url) : Promise.resolve(null))),
+  )
+  const imageByUrl = new Map<string, string | null>()
+  top.forEach((item, idx) => {
+    const r = imageResults[idx]
+    const value = r.status === 'fulfilled' ? r.value : null
+    imageByUrl.set(item.url, value)
+    console.log('[sync-stats] og:image resolved', item.url, '->', value)
+  })
+
   let inserted = 0
   for (const item of top) {
     if (!item.url) continue
@@ -440,18 +482,20 @@ async function ingestRssIntoNews(
     const summaryText = (item.summary || '').trim()
     const body = (summaryText ? summaryText : headline).substring(0, 500)
     const publishedAt = item.date ? new Date(item.date).toISOString() : new Date().toISOString()
+    const imageUrl = imageByUrl.get(item.url) ?? null
 
     const payload = {
       headline,
       body,
       source_label: deriveSourceLabel(item.url, item.title),
       source_url: item.url,
+      image_url: imageUrl,
       tag: 'UPDATE',
       tag_color: '#94a3b8',
       published_at: publishedAt,
     }
 
-    console.log('[sync-stats] inserting news', payload.source_label, headline)
+    console.log('[sync-stats] inserting news', payload.source_label, headline, 'image:', imageUrl)
 
     const res = await fetch(`${SUPABASE_URL}/rest/v1/andes_news`, {
       method: 'POST',
