@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     images: [{
-      url: '/og?title=Andes+Virus+Tracker&sub=8+cases+%C2%B7+3+deaths+%C2%B7+23+countries',
+      url: 'https://andesvirustracker.com/og',
       width: 1200, height: 630,
       alt: 'Andes Virus Tracker — Live Outbreak Map 2026',
     }],
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Andes Virus Tracker — Live 2026',
     description: '8 confirmed cases · 3 deaths · 23 countries. The only hantavirus that spreads person-to-person.',
-    images: ['/og?title=Andes+Virus+Tracker&sub=8+cases+%C2%B7+3+deaths+%C2%B7+23+countries'],
+    images: ['https://andesvirustracker.com/og'],
   },
   robots: {
     index: true, follow: true,

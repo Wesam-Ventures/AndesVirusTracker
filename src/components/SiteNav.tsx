@@ -24,8 +24,11 @@ export default function SiteNav() {
 
           {/* Logo + LIVE */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <Link href="/" className="font-display" style={{ fontSize: 15, fontWeight: 700, color: 'var(--fg)', letterSpacing: 0.5, whiteSpace: 'nowrap', textDecoration: 'none' }}>
-              ANDES VIRUS
+            <Link href="/" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              <div style={{ width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderBottom: '13px solid #ef4444', marginRight: '8px', display: 'flex', alignSelf: 'center' }} />
+              <span className="font-mono" style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: 1.5 }}>
+                ANDES VIRUS
+              </span>
             </Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 20, padding: '3px 8px', flexShrink: 0 }}>
               <div className="blink" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)' }} />

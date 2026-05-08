@@ -199,6 +199,15 @@ export async function GET(req: NextRequest) {
 
   const updated = patchRes.ok ? await patchRes.json() : null
 
+  // MARK: - Auto-insert andes_events on stat increases
+  const eventsInserted = await insertEventsForIncreases({
+    cases,
+    deaths,
+    countries,
+    current,
+    breaking,
+  })
+
   // MARK: - Auto-ingest top RSS items into andes_news
   const newsInserted = await ingestRssIntoNews(allItems)
 
@@ -208,33 +217,172 @@ export async function GET(req: NextRequest) {
     updates,
     articlesScanned: allItems.length,
     newsInserted,
+    eventsInserted,
   })
+}
+
+// MARK: - Events ingestion helpers
+
+type CurrentStats = {
+  confirmed_cases?: number | null
+  deaths?: number | null
+  countries_monitoring?: number | null
+} | null | undefined
+
+type BreakingItem = { text: string; url: string } | null
+
+async function postEvent(payload: Record<string, unknown>): Promise<boolean> {
+  console.log('[sync-stats] inserting event', payload.tag, payload.event)
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/andes_events`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '')
+      console.log('[sync-stats] event insert failed', res.status, errText)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.log('[sync-stats] event insert error', err)
+    return false
+  }
+}
+
+async function insertEventsForIncreases(args: {
+  cases: number | null
+  deaths: number | null
+  countries: number | null
+  current: CurrentStats
+  breaking: BreakingItem
+}): Promise<number> {
+  const { cases, deaths, countries, current, breaking } = args
+  const today = new Date().toISOString().split('T')[0]
+  const currentCases = current?.confirmed_cases ?? 0
+  const currentDeaths = current?.deaths ?? 0
+  const currentCountries = current?.countries_monitoring ?? 0
+
+  const inserts: Promise<boolean>[] = []
+
+  if (cases !== null && cases > currentCases) {
+    const headline = breaking?.text?.substring(0, 80) || 'new case confirmed'
+    inserts.push(
+      postEvent({
+        event_date: today,
+        event: `Confirmed case count rises to ${cases} — ${headline}`,
+        cases: cases,
+        deaths: deaths ?? current?.deaths ?? 0,
+        source: 'WHO / RSS Feeds',
+        tag: 'CONFIRMED',
+        tag_color: '#ef4444',
+      }),
+    )
+  }
+
+  if (deaths !== null && deaths > currentDeaths) {
+    inserts.push(
+      postEvent({
+        event_date: today,
+        event: `Death toll rises to ${deaths}`,
+        cases: cases ?? current?.confirmed_cases ?? 0,
+        deaths: deaths,
+        source: 'WHO / RSS Feeds',
+        tag: 'CONFIRMED',
+        tag_color: '#ef4444',
+      }),
+    )
+  }
+
+  if (countries !== null && countries > currentCountries) {
+    inserts.push(
+      postEvent({
+        event_date: today,
+        event: `${countries} countries now monitoring returned passengers`,
+        cases: cases ?? current?.confirmed_cases ?? 0,
+        deaths: deaths ?? current?.deaths ?? 0,
+        source: 'WHO / ECDC',
+        tag: 'UPDATE',
+        tag_color: '#f59e0b',
+      }),
+    )
+  }
+
+  if (inserts.length === 0) {
+    console.log('[sync-stats] no event-worthy increases detected')
+    return 0
+  }
+
+  const results = await Promise.allSettled(inserts)
+  const inserted = results.filter(r => r.status === 'fulfilled' && r.value === true).length
+  console.log('[sync-stats] events inserted total:', inserted, 'of', inserts.length)
+  return inserted
 }
 
 // MARK: - News ingestion helpers
 
 const SOURCE_LABEL_MAP: Record<string, string> = {
-  'who.int': 'WHO',
   'cnn.com': 'CNN',
-  'nytimes.com': 'NY TIMES',
   'bbc.com': 'BBC',
   'bbc.co.uk': 'BBC',
+  'nytimes.com': 'NY TIMES',
   'reuters.com': 'REUTERS',
-  'apnews.com': 'AP',
-  'theguardian.com': 'GUARDIAN',
+  'apnews.com': 'AP NEWS',
+  'theguardian.com': 'THE GUARDIAN',
   'washingtonpost.com': 'WASHINGTON POST',
-  'bloomberg.com': 'BLOOMBERG',
+  'nbcnews.com': 'NBC NEWS',
+  'abcnews.go.com': 'ABC NEWS',
+  'cbsnews.com': 'CBS NEWS',
+  'foxnews.com': 'FOX NEWS',
+  'npr.org': 'NPR',
+  'time.com': 'TIME',
+  'newsweek.com': 'NEWSWEEK',
+  'who.int': 'WHO',
+  'cdc.gov': 'CDC',
+  'ecdc.europa.eu': 'ECDC',
+  'globalnews.ca': 'GLOBAL NEWS',
+  'instagram.com': 'INSTAGRAM',
+  'facebook.com': 'FACEBOOK',
+  'twitter.com': 'X / TWITTER',
+  'x.com': 'X / TWITTER',
+  'wikipedia.org': 'WIKIPEDIA',
 }
 
-function deriveSourceLabel(url: string): string {
+// MARK: - Source label extraction
+function deriveSourceLabel(url: string, title?: string): string {
   try {
     const host = new URL(url).hostname.replace(/^www\./, '').toLowerCase()
+
+    // Exact host match
     if (SOURCE_LABEL_MAP[host]) return SOURCE_LABEL_MAP[host]
-    // Match parent domain (e.g. "edition.cnn.com" -> "cnn.com")
+
+    // Parent domain match (e.g. "edition.cnn.com" -> "cnn.com",
+    // "en.wikipedia.org" -> "wikipedia.org")
     for (const key of Object.keys(SOURCE_LABEL_MAP)) {
       if (host.endsWith(`.${key}`)) return SOURCE_LABEL_MAP[key]
     }
-    return host.toUpperCase()
+
+    // Google search/news URLs — try to pull outlet from " - Outlet" suffix
+    // in the title (Google Alerts titles look like "Headline - CNN")
+    if (host === 'google.com' || host.endsWith('.google.com')) {
+      if (title) {
+        const m = title.match(/\s-\s([^-]+)$/)
+        if (m) {
+          const outlet = m[1].trim().toUpperCase()
+          if (outlet) return outlet.substring(0, 20)
+        }
+      }
+      return 'NEWS'
+    }
+
+    // Default: hostname without www, uppercased, capped at 20 chars
+    return host.toUpperCase().substring(0, 20)
   } catch {
     return 'NEWS'
   }
@@ -296,7 +444,7 @@ async function ingestRssIntoNews(
     const payload = {
       headline,
       body,
-      source_label: deriveSourceLabel(item.url),
+      source_label: deriveSourceLabel(item.url, item.title),
       source_url: item.url,
       tag: 'UPDATE',
       tag_color: '#94a3b8',

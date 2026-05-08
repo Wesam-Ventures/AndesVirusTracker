@@ -3,6 +3,9 @@ import SiteNav from '@/components/SiteNav'
 import SiteFooter from '@/components/SiteFooter'
 import Link from 'next/link'
 
+// MARK: ISR — revalidate every 60s
+export const revalidate = 60
+
 export const metadata: Metadata = {
   title: 'Andes Virus News & Updates 2026 — MV Hondius Outbreak',
   description: 'Latest Andes virus news, case updates, and WHO/CDC statements. Chronological timeline of the 2026 MV Hondius hantavirus outbreak. Updated daily.',
@@ -13,7 +16,7 @@ export const metadata: Metadata = {
     url: 'https://andesvirustracker.com/andes-virus-news',
     type: 'article',
     publishedTime: '2026-05-07T00:00:00Z',
-    modifiedTime: '2026-05-07T14:00:00Z',
+    modifiedTime: new Date().toISOString(),
     images: [{ url: '/og?title=Andes+Virus+News+2026&sub=Latest+WHO+%2F+CDC+outbreak+updates', width: 1200, height: 630 }],
   },
   alternates: { canonical: 'https://andesvirustracker.com/andes-virus-news' },
@@ -26,7 +29,7 @@ const newsJsonLd = [
     headline: 'Andes Virus 2026 Outbreak — MV Hondius Case Timeline',
     description: 'Chronological timeline of the 2026 Andes virus outbreak linked to the MV Hondius polar expedition cruise.',
     datePublished: '2026-05-07T00:00:00Z',
-    dateModified: '2026-05-07T14:00:00Z',
+    dateModified: new Date().toISOString(),
     author: { '@type': 'Organization', name: 'AndesVirusTracker.com' },
     publisher: { '@type': 'Organization', name: 'AndesVirusTracker.com', logo: { '@type': 'ImageObject', url: 'https://andesvirustracker.com/og' } },
     mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://andesvirustracker.com/andes-virus-news' },
@@ -43,6 +46,38 @@ const breadcrumbJsonLd = {
   ],
 }
 
+// MARK: Live news fetcher (Supabase REST)
+type Article = {
+  id?: string | number
+  published_at: string
+  tag: string
+  tag_color: string
+  headline: string
+  body: string
+  source_label: string
+  source_url: string
+}
+
+async function getNews(): Promise<Article[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1/andes_news?select=*&order=published_at.desc&limit=30'
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  console.log('[andes-virus-news] getNews: fetching live articles', { url })
+  try {
+    const res = await fetch(url, { headers: { apikey: key, Authorization: 'Bearer ' + key }, next: { revalidate: 60 } })
+    if (!res.ok) {
+      console.log('[andes-virus-news] getNews: non-OK response, falling back', { status: res.status })
+      return []
+    }
+    const data = (await res.json()) as Article[]
+    console.log('[andes-virus-news] getNews: loaded articles', { count: Array.isArray(data) ? data.length : 0 })
+    return Array.isArray(data) ? data : []
+  } catch (err) {
+    console.log('[andes-virus-news] getNews: fetch failed, falling back to TIMELINE', err)
+    return []
+  }
+}
+
+// MARK: Hardcoded fallback timeline (used when live fetch returns nothing)
 const TIMELINE = [
   {
     date: 'May 7, 2026', tag: 'CONFIRMED', color: '#ef4444',
@@ -82,7 +117,26 @@ const TIMELINE = [
   },
 ]
 
-export default function NewsPage() {
+export default async function AndesVirusNewsPage() {
+  const articles = await getNews()
+  console.log('[andes-virus-news] render: using source', { source: articles.length > 0 ? 'live' : 'fallback', count: articles.length })
+
+  // MARK: Normalize live articles into the same shape as TIMELINE so the JSX stays untouched
+  const items = articles.length > 0
+    ? articles.map((a) => ({
+        date: new Date(a.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        tag: a.tag,
+        color: a.tag_color,
+        headline: a.headline,
+        body: a.body,
+        sources: [{ label: a.source_label, url: a.source_url }],
+      }))
+    : TIMELINE
+
+  const updatedLabel = articles[0]?.published_at
+    ? new Date(articles[0].published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()
+    : 'MAY 7, 2026'
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {newsJsonLd.map((s, i) => (
@@ -92,7 +146,7 @@ export default function NewsPage() {
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 16px 0' }}>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 12 }}>OUTBREAK TIMELINE · UPDATED MAY 7, 2026</p>
+        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 12 }}>OUTBREAK TIMELINE · UPDATED {updatedLabel}</p>
         <h1 className="font-display" style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, color: 'var(--fg)', letterSpacing: 0.5, lineHeight: 1.1, marginBottom: 8 }}>
           Andes Virus News<br /><span style={{ color: 'var(--red)' }}>2026 Outbreak Updates</span>
         </h1>
@@ -119,7 +173,7 @@ export default function NewsPage() {
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'absolute', left: 7, top: 0, bottom: 0, width: 1, background: 'var(--line)' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {TIMELINE.map((item, i) => (
+            {items.map((item, i) => (
               <div key={i} style={{ paddingLeft: 28, position: 'relative' }}>
                 <div style={{ position: 'absolute', left: 0, top: 6, width: 15, height: 15, borderRadius: '50%', background: item.color, boxShadow: `0 0 8px ${item.color}60`, zIndex: 1 }} />
                 <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line)', borderRadius: 10, padding: '16px' }}>

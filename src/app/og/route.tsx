@@ -128,6 +128,18 @@ export async function GET(req: NextRequest) {
             marginBottom: '36px',
           }}
         >
+          {/* MARK: Triangle logo mark */}
+          <div
+            style={{
+              width: 0,
+              height: 0,
+              borderLeft: '10px solid transparent',
+              borderRight: '10px solid transparent',
+              borderBottom: '18px solid #ef4444',
+              display: 'flex',
+              marginRight: '12px',
+            }}
+          />
           <div
             style={{
               display: 'flex',
