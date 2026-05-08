@@ -581,16 +581,18 @@ export default function Home({ stats: initialStats, news, events }: Props) {
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-2)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-1)')}>
               {imageUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imageUrl}
-                  alt=""
-                  onError={(e) => {
-                    console.log('[news-cover] failed to load:', imageUrl)
-                    e.currentTarget.style.display = 'none'
-                  }}
-                  style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}
-                />
+                <div style={{ width: '100%', height: 180, overflow: 'hidden' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={'https://images.weserv.nl/?url=' + encodeURIComponent(imageUrl) + '&w=600&h=180&fit=cover&output=webp'}
+                    alt=""
+                    onError={(e) => {
+                      console.log('[news-cover] failed to load (weserv):', imageUrl)
+                      e.currentTarget.parentElement!.style.display = 'none'
+                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                </div>
               )}
               <div style={{ padding: 14 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
