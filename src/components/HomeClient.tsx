@@ -28,12 +28,12 @@ const NEWS = [
 ]
 
 const GEAR = [
-  { name: '3M P100 Half-Face Respirator', desc: 'Maximum respiratory protection against airborne particles', price: '$45–65', url: 'https://www.amazon.com/s?k=3M+P100+respirator&tag=YOURTAG-20' },
-  { name: 'N95 Respirator Masks (50-pack)', desc: 'CDC-recommended respiratory protection, NIOSH approved', price: '$25–40', url: 'https://www.amazon.com/s?k=N95+respirator+masks+50+pack&tag=YOURTAG-20' },
-  { name: 'Tyvek Protective Coverall Suit', desc: 'Full-body barrier protection for rodent cleanup', price: '$15–25', url: 'https://www.amazon.com/s?k=tyvek+coverall+suit&tag=YOURTAG-20' },
-  { name: 'Victor Snap Trap (12-pack)', desc: 'Eliminate rodent vectors around your home', price: '$15–20', url: 'https://www.amazon.com/s?k=victor+snap+trap+rodent&tag=YOURTAG-20' },
-  { name: 'Nitrile Gloves (100-pack)', desc: 'Barrier protection for cleanup operations', price: '$12–18', url: 'https://www.amazon.com/s?k=nitrile+gloves+100+pack&tag=YOURTAG-20' },
-  { name: 'Lysol Disinfectant Spray (4-pack)', desc: 'EPA-registered for rodent-contaminated surfaces', price: '$20–30', url: 'https://www.amazon.com/s?k=lysol+disinfectant+spray&tag=YOURTAG-20' },
+  { name: '3M P100 Half-Face Respirator', desc: 'Maximum respiratory protection against airborne particles', price: '$45–65', url: 'https://www.amazon.com/s?k=3M+P100+respirator&tag=andesvirustra-20' },
+  { name: 'N95 Respirator Masks (50-pack)', desc: 'CDC-recommended respiratory protection, NIOSH approved', price: '$25–40', url: 'https://www.amazon.com/s?k=N95+respirator+masks+50+pack&tag=andesvirustra-20' },
+  { name: 'Tyvek Protective Coverall Suit', desc: 'Full-body barrier protection for rodent cleanup', price: '$15–25', url: 'https://www.amazon.com/s?k=tyvek+coverall+suit&tag=andesvirustra-20' },
+  { name: 'Victor Snap Trap (12-pack)', desc: 'Eliminate rodent vectors around your home', price: '$15–20', url: 'https://www.amazon.com/s?k=victor+snap+trap+rodent&tag=andesvirustra-20' },
+  { name: 'Nitrile Gloves (100-pack)', desc: 'Barrier protection for cleanup operations', price: '$12–18', url: 'https://www.amazon.com/s?k=nitrile+gloves+100+pack&tag=andesvirustra-20' },
+  { name: 'Lysol Disinfectant Spray (4-pack)', desc: 'EPA-registered for rodent-contaminated surfaces', price: '$20–30', url: 'https://www.amazon.com/s?k=lysol+disinfectant+spray&tag=andesvirustra-20' },
 ]
 
 const SYMPTOMS = [
