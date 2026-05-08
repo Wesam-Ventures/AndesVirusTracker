@@ -169,7 +169,7 @@ function DesktopGlobe() {
       if (!el) return
       const w = el.clientWidth
       const isMobileView = window.innerWidth < 768
-      const h = isMobileView ? Math.min(w, window.innerHeight * 0.85) : Math.min(w * 0.82, 760)
+      const h = isMobileView ? Math.min(w * 0.9, window.innerHeight * 0.65) : Math.min(w * 0.82, 760)
       setDims({ w, h })
     }
     update()
@@ -198,14 +198,16 @@ function DesktopGlobe() {
   useEffect(() => {
     const g = globeRef.current
     if (!g) return
-    g.controls().autoRotate = false
+    g.controls().autoRotate = true
+    g.controls().autoRotateSpeed = 0.4
     g.controls().enableZoom = true
     g.controls().minDistance = 110
     g.controls().maxDistance = 850
     g.controls().enableDamping = true
-    g.controls().dampingFactor = 0.05
-    g.controls().rotateSpeed = 0.6
-    g.pointOfView({ lat: 20, lng: -20, altitude: 1.85 }, 1500)
+    g.controls().dampingFactor = 0.12
+    g.controls().rotateSpeed = 0.4
+    g.controls().touches = { ONE: 1, TWO: 2 }
+    g.pointOfView({ lat: 20, lng: -20, altitude: 2.2 }, 1500)
   }, [])
 
   const pointRadius = useCallback((d: any) => d.size * pulse, [pulse])
@@ -229,10 +231,7 @@ function DesktopGlobe() {
     : { position: 'relative', width: '100%', background: '#050810', borderRadius: 12, overflow: 'hidden', touchAction: 'none' }
 
   return (
-    <div ref={containerRef} style={wrapStyle}
-      onTouchStart={e => e.stopPropagation()}
-      onTouchEnd={e => e.stopPropagation()}
-      onTouchMove={e => e.stopPropagation()}>
+    <div ref={containerRef} style={wrapStyle}>
       <Globe
         ref={globeRef}
         width={dims.w}

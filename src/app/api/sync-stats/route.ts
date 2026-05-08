@@ -199,10 +199,131 @@ export async function GET(req: NextRequest) {
 
   const updated = patchRes.ok ? await patchRes.json() : null
 
+  // MARK: - Auto-ingest top RSS items into andes_news
+  const newsInserted = await ingestRssIntoNews(allItems)
+
   return NextResponse.json({
     ok: true,
     extracted: { cases, deaths, countries, exposed, whoRiskLevel },
     updates,
     articlesScanned: allItems.length,
+    newsInserted,
   })
+}
+
+// MARK: - News ingestion helpers
+
+const SOURCE_LABEL_MAP: Record<string, string> = {
+  'who.int': 'WHO',
+  'cnn.com': 'CNN',
+  'nytimes.com': 'NY TIMES',
+  'bbc.com': 'BBC',
+  'bbc.co.uk': 'BBC',
+  'reuters.com': 'REUTERS',
+  'apnews.com': 'AP',
+  'theguardian.com': 'GUARDIAN',
+  'washingtonpost.com': 'WASHINGTON POST',
+  'bloomberg.com': 'BLOOMBERG',
+}
+
+function deriveSourceLabel(url: string): string {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '').toLowerCase()
+    if (SOURCE_LABEL_MAP[host]) return SOURCE_LABEL_MAP[host]
+    // Match parent domain (e.g. "edition.cnn.com" -> "cnn.com")
+    for (const key of Object.keys(SOURCE_LABEL_MAP)) {
+      if (host.endsWith(`.${key}`)) return SOURCE_LABEL_MAP[key]
+    }
+    return host.toUpperCase()
+  } catch {
+    return 'NEWS'
+  }
+}
+
+async function newsRowExists(sourceUrl: string): Promise<boolean> {
+  try {
+    const encoded = encodeURIComponent(sourceUrl)
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/andes_news?select=id&source_url=eq.${encoded}&limit=1`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+    )
+    if (!res.ok) {
+      console.log('[sync-stats] news lookup failed', res.status, sourceUrl)
+      return false
+    }
+    const rows = await res.json()
+    return Array.isArray(rows) && rows.length > 0
+  } catch (err) {
+    console.log('[sync-stats] news lookup error', err)
+    return false
+  }
+}
+
+async function ingestRssIntoNews(
+  items: { title: string; summary: string; url: string; date: string }[],
+): Promise<number> {
+  // Deduplicate by title (first occurrence wins)
+  const seen = new Set<string>()
+  const unique = items.filter(i => {
+    const key = i.title.trim().toLowerCase()
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  // Sort by date desc and take top 5
+  const top = [...unique]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5)
+
+  console.log('[sync-stats] candidate news items:', top.length, 'of', unique.length, 'unique')
+
+  let inserted = 0
+  for (const item of top) {
+    if (!item.url) continue
+
+    const exists = await newsRowExists(item.url)
+    if (exists) {
+      console.log('[sync-stats] skip existing news', item.url)
+      continue
+    }
+
+    const headline = item.title.substring(0, 300)
+    const summaryText = (item.summary || '').trim()
+    const body = (summaryText ? summaryText : headline).substring(0, 500)
+    const publishedAt = item.date ? new Date(item.date).toISOString() : new Date().toISOString()
+
+    const payload = {
+      headline,
+      body,
+      source_label: deriveSourceLabel(item.url),
+      source_url: item.url,
+      tag: 'UPDATE',
+      tag_color: '#94a3b8',
+      published_at: publishedAt,
+    }
+
+    console.log('[sync-stats] inserting news', payload.source_label, headline)
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/andes_news`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (res.ok) {
+      inserted++
+    } else {
+      const errText = await res.text().catch(() => '')
+      console.log('[sync-stats] news insert failed', res.status, errText)
+    }
+  }
+
+  console.log('[sync-stats] news inserted total:', inserted)
+  return inserted
 }

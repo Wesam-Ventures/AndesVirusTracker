@@ -3,13 +3,18 @@ import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
+// MARK: - Types
+
 type AndesStats = {
   confirmed_cases: number
   deaths: number
   countries_monitoring: number
 }
 
+// MARK: - Route
+
 export async function GET(req: NextRequest) {
+  // MARK: Load live stats from Supabase (with fallback)
   let stats: AndesStats = {
     confirmed_cases: 8,
     deaths: 3,
@@ -48,79 +53,228 @@ export async function GET(req: NextRequest) {
     console.log('[og/route.tsx] using fallback Andes stats', error)
   }
 
+  // MARK: Read query params
   const { searchParams } = new URL(req.url)
-  const title = searchParams.get('title') || 'Andes Virus Tracker'
-  const sub = searchParams.get('sub') || '8 cases · 3 deaths · 23 countries monitoring'
+  const sub =
+    searchParams.get('sub') ||
+    `${stats.confirmed_cases} cases · ${stats.deaths} deaths · ${stats.countries_monitoring} countries monitoring`
 
+  console.log('[og/route.tsx] rendering OG image', { sub, stats })
+
+  // MARK: Stat cards
+  const statCards: Array<[string, string]> = [
+    [String(stats.confirmed_cases), 'CASES'],
+    [String(stats.deaths), 'DEATHS'],
+    [String(stats.countries_monitoring), 'COUNTRIES'],
+    ['40%', 'FATALITY RATE'],
+  ]
+
+  // MARK: Render
   return new ImageResponse(
     (
       <div
         style={{
-          width: '1200px', height: '630px',
-          background: '#0a0c0f',
-          display: 'flex', flexDirection: 'column',
-          justifyContent: 'center', alignItems: 'flex-start',
-          padding: '64px 80px',
+          width: '1200px',
+          height: '630px',
+          background:
+            'radial-gradient(ellipse at 20% 50%, rgba(239,68,68,0.12) 0%, #0a0c0f 60%)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          padding: '72px 88px',
           fontFamily: 'monospace',
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {/* Grid background */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: 'linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }} />
-
-        {/* Red accent line */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: '#ef4444', display: 'flex' }} />
-
-        {/* LIVE badge */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)',
-          borderRadius: '20px', padding: '6px 14px', marginBottom: '28px',
-        }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'flex' }} />
-          <span style={{ color: '#ef4444', fontSize: '14px', letterSpacing: '2px' }}>LIVE OUTBREAK</span>
+        {/* MARK: Faded AV watermark */}
+        <div
+          style={{
+            position: 'absolute',
+            right: '-20px',
+            bottom: '-40px',
+            fontSize: '320px',
+            fontWeight: 900,
+            color: 'rgba(239,68,68,0.04)',
+            fontFamily: 'monospace',
+            lineHeight: 1,
+            display: 'flex',
+            letterSpacing: '-8px',
+          }}
+        >
+          AV
         </div>
 
-        {/* Title */}
-        <div style={{
-          fontSize: title.length > 30 ? '52px' : '64px',
-          fontWeight: 900, color: '#ffffff', lineHeight: 1.05,
-          marginBottom: '20px', letterSpacing: '-1px',
-          maxWidth: '900px', display: 'flex', flexWrap: 'wrap',
-        }}>
-          {title}
+        {/* MARK: Vertical red accent bar */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: '4px',
+            background: '#ef4444',
+            display: 'flex',
+          }}
+        />
+
+        {/* MARK: Top row — LIVE badge + domain */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '36px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'rgba(239,68,68,0.12)',
+              border: '1px solid rgba(239,68,68,0.4)',
+              borderRadius: '20px',
+              padding: '6px 14px',
+            }}
+          >
+            <div
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: 'rgba(239,68,68,1)',
+                display: 'flex',
+                boxShadow: '0 0 12px rgba(239,68,68,0.8)',
+              }}
+            />
+            <span
+              style={{
+                color: '#ef4444',
+                fontSize: '14px',
+                letterSpacing: '2px',
+                fontWeight: 700,
+              }}
+            >
+              LIVE OUTBREAK
+            </span>
+          </div>
+          <span
+            style={{
+              color: '#475569',
+              fontSize: '14px',
+              letterSpacing: '1px',
+              display: 'flex',
+            }}
+          >
+            andesvirustracker.com
+          </span>
         </div>
 
-        {/* Sub */}
-        <div style={{ fontSize: '22px', color: '#94a3b8', letterSpacing: '1px', marginBottom: '48px', display: 'flex' }}>
+        {/* MARK: Title — ANDES VIRUS / TRACKER */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            marginBottom: '24px',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '72px',
+              fontWeight: 900,
+              color: '#ffffff',
+              letterSpacing: '-2px',
+              lineHeight: 1,
+              display: 'flex',
+            }}
+          >
+            ANDES VIRUS
+          </span>
+          <span
+            style={{
+              fontSize: '72px',
+              fontWeight: 900,
+              color: '#ef4444',
+              letterSpacing: '-2px',
+              lineHeight: 1,
+              display: 'flex',
+              marginTop: '4px',
+            }}
+          >
+            TRACKER
+          </span>
+        </div>
+
+        {/* MARK: Subtitle */}
+        <div
+          style={{
+            fontSize: '18px',
+            color: '#64748b',
+            letterSpacing: '0.5px',
+            marginBottom: '52px',
+            display: 'flex',
+            maxWidth: '900px',
+          }}
+        >
           {sub}
         </div>
 
-        {/* Stats row */}
-        <div style={{ display: 'flex', gap: '40px' }}>
-          {[
-            [String(stats.confirmed_cases), 'CASES'],
-            [String(stats.deaths), 'DEATHS'],
-            [String(stats.countries_monitoring), 'COUNTRIES'],
-            ['40%', 'FATALITY RATE'],
-          ].map(([v, l]) => (
-            <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '36px', fontWeight: 800, color: '#ef4444' }}>{v}</span>
-              <span style={{ fontSize: '11px', color: '#64748b', letterSpacing: '2px' }}>{l}</span>
+        {/* MARK: Stats row — 4 cards */}
+        <div style={{ display: 'flex', gap: '16px' }}>
+          {statCards.map(([value, label]) => (
+            <div
+              key={label}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                gap: '6px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                borderRadius: '8px',
+                padding: '12px 20px',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '36px',
+                  fontWeight: 800,
+                  color: '#ef4444',
+                  lineHeight: 1,
+                  display: 'flex',
+                }}
+              >
+                {value}
+              </span>
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: '#475569',
+                  letterSpacing: '2px',
+                  display: 'flex',
+                }}
+              >
+                {label}
+              </span>
             </div>
           ))}
         </div>
 
-        {/* Domain */}
-        <div style={{
-          position: 'absolute', bottom: '32px', right: '80px',
-          fontSize: '16px', color: '#475569', letterSpacing: '2px', display: 'flex',
-        }}>
-          ANDESVIRUSTRACKER.COM
+        {/* MARK: Bottom-right domain */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '36px',
+            right: '88px',
+            fontSize: '13px',
+            color: '#334155',
+            letterSpacing: '3px',
+            display: 'flex',
+          }}
+        >
+          andesvirustracker.com
         </div>
       </div>
     ),

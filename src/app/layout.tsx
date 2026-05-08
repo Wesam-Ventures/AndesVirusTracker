@@ -13,7 +13,12 @@ export const metadata: Metadata = {
   creator: 'M&W Business Development LLC',
   publisher: 'AndesVirusTracker.com',
   metadataBase: new URL('https://andesvirustracker.com'),
-  icons: { icon: '/favicon.ico', apple: '/api/apple-icon', shortcut: '/favicon.ico' },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/api/apple-icon',
+    shortcut: '/favicon.ico',
+    other: [{ rel: 'mask-icon', url: '/logo.svg', color: '#ef4444' }],
+  },
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Andes Tracker' },
   openGraph: {

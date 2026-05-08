@@ -20,12 +20,12 @@ const NEWS = [
 ]
 
 const GEAR = [
-  { name: '3M P100 Half-Face Respirator', desc: 'Maximum respiratory protection against airborne particles', price: '$45–65', url: 'https://www.amazon.com/dp/B01CSPTIFW?tag=andesvirustra-20' },
-  { name: 'N95 Respirator Masks (50-pack)', desc: 'CDC-recommended respiratory protection, NIOSH approved', price: '$25–40', url: 'https://www.amazon.com/dp/B008MCUZZS?tag=andesvirustra-20' },
-  { name: 'Tyvek Protective Coverall Suit', desc: 'Full-body barrier protection for rodent cleanup', price: '$15–25', url: 'https://www.amazon.com/dp/B07KRXXFGZ?tag=andesvirustra-20' },
-  { name: 'Victor Snap Trap (12-pack)', desc: 'Eliminate rodent vectors around your home', price: '$15–20', url: 'https://www.amazon.com/dp/B0781YYN3F?tag=andesvirustra-20' },
-  { name: 'Nitrile Gloves (100-pack)', desc: 'Barrier protection for cleanup operations', price: '$12–18', url: 'https://www.amazon.com/dp/B0CP7GP2KW?tag=andesvirustra-20' },
-  { name: 'Lysol Disinfectant Spray (4-pack)', desc: 'EPA-registered for rodent-contaminated surfaces', price: '$20–30', url: 'https://www.amazon.com/dp/B083HL7NMC?tag=andesvirustra-20' },
+  { icon: '🫁', name: '3M P100 Half-Face Respirator', desc: 'Maximum respiratory protection against airborne particles', price: '$45–65', url: 'https://www.amazon.com/dp/B01CSPTIFW?tag=andesvirustra-20' },
+  { icon: '😷', name: 'N95 Respirator Masks (50-pack)', desc: 'CDC-recommended respiratory protection, NIOSH approved', price: '$25–40', url: 'https://www.amazon.com/dp/B008MCUZZS?tag=andesvirustra-20' },
+  { icon: '🥼', name: 'Tyvek Protective Coverall Suit', desc: 'Full-body barrier protection for rodent cleanup', price: '$15–25', url: 'https://www.amazon.com/dp/B07KRXXFGZ?tag=andesvirustra-20' },
+  { icon: '🐭', name: 'Victor Snap Trap (12-pack)', desc: 'Eliminate rodent vectors around your home', price: '$15–20', url: 'https://www.amazon.com/dp/B0781YYN3F?tag=andesvirustra-20' },
+  { icon: '🧤', name: 'Nitrile Gloves (100-pack)', desc: 'Barrier protection for cleanup operations', price: '$12–18', url: 'https://www.amazon.com/dp/B0CP7GP2KW?tag=andesvirustra-20' },
+  { icon: '🧴', name: 'Lysol Disinfectant Spray (4-pack)', desc: 'EPA-registered for rodent-contaminated surfaces', price: '$20–30', url: 'https://www.amazon.com/dp/B083HL7NMC?tag=andesvirustra-20' },
 ]
 
 const OTHER_OUTBREAKS = [
@@ -327,9 +327,9 @@ export default function Home({ stats: initialStats, news, events }: Props) {
 
       {/* ── BREAKING BANNER ── */}
       <div style={{ maxWidth: 900, margin: '12px auto', padding: '0 16px' }}>
-        <div className="hazard-stripe" style={{ border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div className="hazard-stripe" style={{ border: '1px solid rgba(239,68,68,0.3)', borderLeft: '3px solid var(--red)', borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span className="font-mono blink" style={{ fontSize: 11, color: 'var(--red)', letterSpacing: 1.5, fontWeight: 700 }}>⚠ BREAKING</span>
+            <span className="font-mono blink" style={{ fontSize: 12, color: 'var(--red)', letterSpacing: 1.5, fontWeight: 700 }}>⚠ BREAKING</span>
             <span className="font-mono" style={{ fontSize: 12, color: 'var(--fg)' }}>{stats.breaking_news}</span>
           </div>
           <a href={stats.breaking_news_url} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 11, color: 'var(--red)', whiteSpace: 'nowrap', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>READ →</a>
@@ -355,15 +355,23 @@ export default function Home({ stats: initialStats, news, events }: Props) {
             { label: 'DEATHS',          value: stats.deaths,               color: 'var(--red)', delay: 80 },
             { label: 'COUNTRIES',       value: stats.countries_monitoring, color: 'var(--amber)', delay: 160 },
             { label: 'EXPOSED',         value: stats.exposed_passengers,   suffix: '+', color: 'var(--amber)', delay: 240 },
-          ].map(s => (
-            <div key={s.label} className="card-corner fade-up" style={{ background: 'var(--bg-1)', padding: '20px 16px', position: 'relative', animationDelay: `${s.delay}ms` }}>
-              <div className="font-display" style={{ fontSize: 44, fontWeight: 800, color: s.color, lineHeight: 1, marginBottom: 6, letterSpacing: -1 }}>
+          ].map(s => {
+            const isRed = s.color === 'var(--red)'
+            return (
+            <div
+              key={s.label}
+              className="card-corner fade-up"
+              style={{ background: 'var(--bg-1)', padding: '20px 16px', position: 'relative', animationDelay: `${s.delay}ms`, transition: 'box-shadow 200ms ease' }}
+              onMouseEnter={isRed ? (e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(239,68,68,0.15)' }) : undefined}
+              onMouseLeave={isRed ? (e => { e.currentTarget.style.boxShadow = 'none' }) : undefined}
+            >
+              <div className="font-display" style={{ fontSize: 48, fontWeight: 800, color: s.color, lineHeight: 1, marginBottom: 6, letterSpacing: -1 }}>
                 <StatCounter target={s.value} suffix={s.suffix} />
               </div>
               <div className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 1.5 }}>{s.label}</div>
               <div className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', marginTop: 6, borderTop: '1px dashed var(--line-strong)', paddingTop: 6 }}>SOURCE: WHO/ECDC</div>
             </div>
-          ))}
+          )})}
         </div>
 
         {/* MOBILE SHARE ROW — desktop uses fixed bar at bottom-right */}
@@ -388,6 +396,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
 
       {/* ── WHO RISK LEVEL ── */}
       <div style={{ maxWidth: 900, margin: '16px auto 0', padding: '0 16px' }}>
+        <style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.6 } }`}</style>
         <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line-strong)', borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '0 0 auto' }}>
             <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -401,7 +410,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
           <div style={{ flex: 1, minWidth: 180 }}>
             <div style={{ display: 'flex', gap: 2, marginBottom: 5 }}>
               {[{ l:'LOW',c:'#4ade80'},{l:'MODERATE',c:'#f59e0b'},{l:'HIGH',c:'#ef4444'},{l:'CRITICAL',c:'#7f1d1d'}].map(lv => { const a = lv.l === stats.who_risk_level; return (
-                <div key={lv.l} style={{ flex: 1, height: 6, borderRadius: 2, background: a ? lv.c : 'rgba(148,163,184,0.1)', boxShadow: a ? `0 0 8px ${lv.c}80` : 'none' }} />
+                <div key={lv.l} style={{ flex: 1, height: 6, borderRadius: 2, background: a ? lv.c : 'rgba(148,163,184,0.1)', boxShadow: a ? `0 0 8px ${lv.c}80` : 'none', animation: a ? 'pulse 2s ease-in-out infinite' : undefined }} />
               )})}
 
             </div>
@@ -449,7 +458,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
       {/* ── EXPOSURE RISK CHECKER ── */}
       <div {...section('risk')}>
         <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>PERSONAL RISK ASSESSMENT</p>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 6 }}>ARE YOU AT RISK?</h2>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg)', letterSpacing: -0.5, marginBottom: 6 }}>ARE YOU AT RISK?</h2>
         <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 20 }}>Answer 3 questions to assess your personal exposure risk. Takes 30 seconds.</p>
         <ExposureChecker />
       </div>
@@ -457,7 +466,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
       {/* ── SITUATION REPORT TABLE ── */}
       <div {...section()}>
         <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>SITUATION REPORT</p>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 20 }}>CASE DATA TIMELINE</h2>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg)', letterSpacing: -0.5, marginBottom: 20 }}>CASE DATA TIMELINE</h2>
         <div style={{ border: '1px solid var(--line-strong)', borderRadius: 12, overflow: 'hidden' }}>
           {/* Desktop header — hidden on mobile */}
           <div className="hidden md:grid" style={{ gridTemplateColumns: '120px 1fr 60px 60px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)', padding: '10px 16px' }}>
@@ -509,7 +518,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
       {/* ── INCUBATION CALCULATOR ── */}
       <div {...section()}>
         <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>EXPOSURE TIMELINE TOOL</p>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 6 }}>INCUBATION CALCULATOR</h2>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg)', letterSpacing: -0.5, marginBottom: 6 }}>INCUBATION CALCULATOR</h2>
         <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 20 }}>If you were potentially exposed, calculate when symptoms could appear based on WHO-published incubation data.</p>
         <IncubationCalc />
       </div>
@@ -517,7 +526,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
       {/* ── SYMPTOMS ── */}
       <div {...section()}>
         <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>CLINICAL PROFILE</p>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 20 }}>SYMPTOMS BY PHASE</h2>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg)', letterSpacing: -0.5, marginBottom: 20 }}>SYMPTOMS BY PHASE</h2>
         <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 8 }}>
           {SYMPTOMS.map(ph => (
             <div key={ph.phase} className="card-corner" style={{ background: 'var(--bg-1)', border: `1px solid ${ph.color}30`, borderRadius: 10, padding: '18px', position: 'relative' }}>
@@ -543,7 +552,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
       {/* ── NEWS ── */}
       <div {...section('news')}>
         <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>INTELLIGENCE FEED</p>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 20 }}>LATEST UPDATES</h2>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg)', letterSpacing: -0.5, marginBottom: 20 }}>LATEST UPDATES</h2>
         <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 1, background: 'var(--line)' }}>
           {(news.length > 0 ? news : NEWS).map(n => {
             const isLive = 'headline' in n
@@ -574,21 +583,23 @@ export default function Home({ stats: initialStats, news, events }: Props) {
       {/* ── PROTECT YOURSELF ── */}
       <div {...section('protect')}>
         <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>PROTECTIVE EQUIPMENT</p>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 4 }}>PROTECT YOURSELF</h2>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg)', letterSpacing: -0.5, marginBottom: 4 }}>PROTECT YOURSELF</h2>
         <p style={{ fontSize: 12, color: 'var(--fg-dim)', marginBottom: 20 }}>Affiliate links support this free tracker. Prices approximate.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3" style={{ gap: 1, background: 'var(--line)' }}>
           {GEAR.map(g => (
             <a key={g.name} href={g.url} target="_blank" rel="noopener noreferrer"
-              style={{ background: 'var(--bg-1)', padding: '16px', display: 'block', textDecoration: 'none', transition: 'background 120ms' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-1)')}>
+              style={{ background: 'var(--bg-1)', borderTop: '2px solid rgba(245,158,11,0.3)', padding: '16px', display: 'block', textDecoration: 'none', transition: 'background 120ms, box-shadow 200ms ease' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-2)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(245,158,11,0.12)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-1)'; e.currentTarget.style.boxShadow = 'none' }}>
               <div className="font-mono" style={{ fontSize: 9, color: 'var(--amber)', letterSpacing: 1.5, marginBottom: 8 }}>AMAZON ↗</div>
-              <p style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 600, lineHeight: 1.4, marginBottom: 6 }}>{g.name}</p>
+              <p style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 600, lineHeight: 1.4, marginBottom: 6 }}>
+                <span style={{ marginRight: 8 }} aria-hidden>{g.icon}</span>{g.name}
+              </p>
               <p style={{ fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1.5, marginBottom: 12 }}>{g.desc}</p>
-              <div style={{ borderTop: '1px dashed var(--line-strong)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="font-mono" style={{ fontSize: 11, color: 'var(--green)', fontWeight: 700 }}>{g.price}</span>
-                <span className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 1 }}>VIEW →</span>
+              <div style={{ borderTop: '1px dashed var(--line-strong)', paddingTop: 10, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+                <span className="font-mono" style={{ fontSize: 18, color: '#4ade80', fontWeight: 800 }}>{g.price}</span>
               </div>
+              <span className="font-mono" style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.5)', borderRadius: 6, padding: '8px 16px', color: '#f59e0b', fontWeight: 700, fontSize: 11, letterSpacing: 1.5, display: 'block', textAlign: 'center', marginTop: 12 }}>VIEW →</span>
             </a>
           ))}
         </div>
@@ -598,33 +609,31 @@ export default function Home({ stats: initialStats, news, events }: Props) {
       {/* ── SUPPORT THIS TRACKER ── */}
       <div {...section('support')}>
         <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>INDEPENDENT TRACKER</p>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 6 }}>KEEP THIS FREE</h2>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg)', letterSpacing: -0.5, marginBottom: 6 }}>KEEP THIS FREE</h2>
         <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 20 }}>This tracker is independently operated. No paywalls, no ads beyond affiliate links. If it helped you, consider supporting the work.</p>
-        <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 1, background: 'var(--line)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {/* Stripe donate */}
-          <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_LINK" target="_blank" rel="noopener noreferrer"
-            style={{ background: 'var(--bg-1)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: 10, padding: '16px', display: 'block', textDecoration: 'none', transition: 'background 120ms' }}
+          <a href="https://buymeacoffee.com/mwapp" target="_blank" rel="noopener noreferrer"
+            style={{ background: 'var(--bg-1)', border: '1px solid rgba(245,158,11,0.7)', borderRadius: 10, padding: '24px', display: 'block', textDecoration: 'none', transition: 'background 120ms', boxShadow: '0 0 20px rgba(245,158,11,0.08)' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-2)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-1)')}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span className="font-mono" style={{ fontSize: 9, color: '#f59e0b', letterSpacing: 1.5 }}>SUPPORT THIS TRACKER</span>
-              <span style={{ fontSize: 18 }} aria-hidden>⚡</span>
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 600, lineHeight: 1.4, marginBottom: 6 }}>One-time tip via Stripe</p>
-            <p style={{ fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1.5 }}>$3 · $5 · $10 → your call</p>
+            <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 8 }} aria-hidden>☕</div>
+            <div className="font-mono" style={{ fontSize: 9, color: '#f59e0b', letterSpacing: 1.5, textAlign: 'center', marginBottom: 6 }}>BUY A COFFEE</div>
+            <p style={{ fontSize: 16, color: 'var(--fg)', fontWeight: 700, lineHeight: 1.4, marginBottom: 6, textAlign: 'center' }}>One-time tip — fuels the tracker</p>
+            <p style={{ fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1.5, textAlign: 'center' }}>$3 · $5 · $10 → your call</p>
+            <span className="font-mono" style={{ background: '#f59e0b', color: '#000', borderRadius: 8, padding: '12px 24px', fontSize: 13, fontWeight: 800, letterSpacing: 1, display: 'block', textAlign: 'center', marginTop: 16 }}>BUY A COFFEE ☕</span>
           </a>
 
           {/* Share the tracker */}
           <div
-            style={{ background: 'var(--bg-1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 10, padding: '16px', display: 'block', transition: 'background 120ms' }}
+            style={{ background: 'var(--bg-1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 10, padding: '24px', display: 'block', transition: 'background 120ms' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-2)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-1)')}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span className="font-mono" style={{ fontSize: 9, color: 'var(--green)', letterSpacing: 1.5 }}>SHARE THE TRACKER</span>
-              <span style={{ fontSize: 18 }} aria-hidden>📡</span>
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 600, lineHeight: 1.4, marginBottom: 6 }}>Tell someone who needs to know</p>
-            <p style={{ fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1.5 }}>Every share = more people informed</p>
+            <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 8 }} aria-hidden>📡</div>
+            <div className="font-mono" style={{ fontSize: 9, color: 'var(--green)', letterSpacing: 1.5, textAlign: 'center', marginBottom: 6 }}>SHARE THE TRACKER</div>
+            <p style={{ fontSize: 16, color: 'var(--fg)', fontWeight: 700, lineHeight: 1.4, marginBottom: 6, textAlign: 'center' }}>Tell someone who needs to know</p>
+            <p style={{ fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1.5, textAlign: 'center' }}>Every share = more people informed</p>
+            <a href={SHARE_TWEET_URL} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ background: 'rgba(74,222,128,0.15)', border: '1px solid #4ade80', color: '#4ade80', borderRadius: 8, padding: '12px 24px', fontSize: 13, fontWeight: 800, letterSpacing: 1, display: 'block', textAlign: 'center', marginTop: 16, textDecoration: 'none' }}>SHARE NOW 📡</a>
           </div>
         </div>
       </div>
@@ -632,7 +641,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
       {/* ── FAQ ── */}
       <div {...section()}>
         <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>INTELLIGENCE · FAQ</p>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 20 }}>FREQUENTLY ASKED</h2>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg)', letterSpacing: -0.5, marginBottom: 20 }}>FREQUENTLY ASKED</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: 'var(--line)' }}>
           {FAQS.map(faq => (
             <details key={faq.q} style={{ background: 'var(--bg-1)' }}>
@@ -681,7 +690,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
       {/* ── OTHER ACTIVE OUTBREAKS ── */}
       <div {...section('other-outbreaks')}>
         <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 2, marginBottom: 10 }}>GLOBAL SURVEILLANCE</p>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 6 }}>OTHER ACTIVE OUTBREAKS</h2>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg)', letterSpacing: -0.5, marginBottom: 6 }}>OTHER ACTIVE OUTBREAKS</h2>
         <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 20 }}>We track Andes virus. These are the other outbreaks public health authorities are actively monitoring worldwide.</p>
         <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 8 }}>
           {OTHER_OUTBREAKS.map(o => (
