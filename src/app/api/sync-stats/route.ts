@@ -299,6 +299,43 @@ export async function GET(req: NextRequest) {
     telegramAlerts.push(postTelegramAlert(msg, newsImage))
   }
 
+  // MARK: - Daily heartbeat digest
+  // Fires once per day (UTC) when no other alert was queued, so the channel never
+  // looks dead during quiet news cycles. Manual override via ?digest=1.
+  const url = new URL(req.url)
+  const forceDigest = url.searchParams.get('digest') === '1'
+  let digestSent = false
+
+  if (telegramAlerts.length === 0) {
+    const lastDigestAt = current?.last_telegram_digest_at ? new Date(current.last_telegram_digest_at) : null
+    const hoursSince = lastDigestAt ? (Date.now() - lastDigestAt.getTime()) / (1000 * 60 * 60) : Infinity
+    const nowUtc = new Date()
+    // Window: 14:00–14:59 UTC = 9:00–9:59 AM CT (10 AM CDT during daylight savings)
+    const inDigestWindow = nowUtc.getUTCHours() === 14
+    const shouldSendDigest = forceDigest || (inDigestWindow && hoursSince >= 20)
+
+    if (shouldSendDigest) {
+      const finalCases = updates.confirmed_cases ?? currentCases
+      const finalDeaths = updates.deaths ?? currentDeaths
+      const finalCountries = updates.countries_monitoring ?? current?.countries_monitoring ?? 0
+      const riskLevel = updates.who_risk_level ?? current?.who_risk_level ?? 'MODERATE'
+      const digestMsg = `📊 ANDES VIRUS — DAILY UPDATE (Day ${dayCount})\n\n🦠 ${finalCases} confirmed cases · 💀 ${finalDeaths} deaths\n🌍 ${finalCountries} countries monitoring\n⚠️ WHO risk level: ${riskLevel}\n\n${breaking ? `📰 ${breaking.text.substring(0, 140)}\n🔗 ${breaking.url}\n\n` : ''}andesvirustracker.com`
+      telegramAlerts.push(postTelegramAlert(digestMsg, newsImage))
+      digestSent = true
+
+      // Persist digest timestamp so we don't re-fire within 20 h
+      await fetch(`${SUPABASE_URL}/rest/v1/andes_stats?id=eq.1`, {
+        method: 'PATCH',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ last_telegram_digest_at: nowUtc.toISOString() }),
+      }).catch(() => {})
+    }
+  }
+
   await Promise.allSettled(telegramAlerts)
 
   return NextResponse.json({
@@ -309,6 +346,7 @@ export async function GET(req: NextRequest) {
     newsInserted,
     eventsInserted,
     telegramAlertsSent: telegramAlerts.length,
+    digestSent,
   })
 }
 
