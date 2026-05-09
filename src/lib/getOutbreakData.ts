@@ -43,17 +43,45 @@ export interface OutbreakEvent {
   tag_color: string
 }
 
+function isOutbreakStats(value: unknown): value is OutbreakStats {
+  if (!value || typeof value !== 'object') return false
+
+  const stats = value as Partial<OutbreakStats>
+
+  return (
+    typeof stats.confirmed_cases === 'number' &&
+    typeof stats.deaths === 'number' &&
+    typeof stats.countries_monitoring === 'number' &&
+    typeof stats.exposed_passengers === 'number' &&
+    typeof stats.who_risk_level === 'string' &&
+    typeof stats.breaking_news === 'string' &&
+    typeof stats.breaking_news_url === 'string' &&
+    typeof stats.day_count === 'number' &&
+    typeof stats.last_updated === 'string'
+  )
+}
+
 export async function getOutbreakStats(): Promise<OutbreakStats> {
   try {
     if (!URL || !KEY) throw new Error('Missing Supabase configuration')
     const res = await fetch(`${URL}/andes_stats?select=*&id=eq.1`, {
       headers,
-      next: { revalidate: 60 }, // refresh every 60 seconds
+      cache: 'no-store',
+      signal: AbortSignal.timeout(4000),
     })
     if (!res.ok) throw new Error('Failed to fetch stats')
     const data = await res.json()
+    if (
+      !data ||
+      !data[0] ||
+      typeof data[0].confirmed_cases !== 'number' ||
+      !isOutbreakStats(data[0])
+    ) {
+      throw new Error('Empty or malformed stats payload')
+    }
     return data[0]
-  } catch {
+  } catch (err) {
+    console.error('[getOutbreakStats] falling back to defaults:', err)
     // Fallback to hardcoded values if Supabase is unreachable
     return {
       confirmed_cases: 8,
@@ -74,11 +102,13 @@ export async function getOutbreakNews(): Promise<OutbreakNews[]> {
     if (!URL || !KEY) throw new Error('Missing Supabase configuration')
     const res = await fetch(`${URL}/andes_news?select=*&order=published_at.desc&limit=6`, {
       headers,
-      next: { revalidate: 60 },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(4000),
     })
     if (!res.ok) throw new Error('Failed to fetch news')
     return await res.json()
-  } catch {
+  } catch (err) {
+    console.error('[getOutbreakNews] falling back to defaults:', err)
     return []
   }
 }
@@ -88,11 +118,13 @@ export async function getOutbreakEvents(): Promise<OutbreakEvent[]> {
     if (!URL || !KEY) throw new Error('Missing Supabase configuration')
     const res = await fetch(`${URL}/andes_events?select=*&order=event_date.desc`, {
       headers,
-      next: { revalidate: 60 },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(4000),
     })
     if (!res.ok) throw new Error('Failed to fetch events')
     return await res.json()
-  } catch {
+  } catch (err) {
+    console.error('[getOutbreakEvents] falling back to defaults:', err)
     return []
   }
 }
