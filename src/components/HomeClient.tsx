@@ -216,6 +216,24 @@ function IncubationCalc() {
   )
 }
 
+// ─── SOURCE LABEL HELPER ─────────────────────────────────────────────────────
+
+function getRealSource(label: string, title: string): string {
+  if (!label.toUpperCase().includes('GOOGLE')) return label
+  const lastSegment = title.split(' - ').pop()?.trim() || ''
+  const map: Record<string, string> = {
+    'Instagram': 'INSTAGRAM', 'Facebook': 'FACEBOOK', 'Wikipedia': 'WIKIPEDIA',
+    'Reuters': 'REUTERS', 'BBC': 'BBC', 'CNN': 'CNN', 'NBC News': 'NBC NEWS',
+    'NPR': 'NPR', 'AP': 'AP NEWS', 'TIME': 'TIME', 'Newsweek': 'NEWSWEEK',
+    'USA Today': 'USA TODAY', 'The Guardian': 'THE GUARDIAN', 'CIDRAP': 'CIDRAP',
+    'Washington Post': 'WASH POST', 'New York Times': 'NY TIMES', 'ABC News': 'ABC NEWS',
+  }
+  for (const [key, val] of Object.entries(map)) {
+    if (lastSegment.toLowerCase().includes(key.toLowerCase())) return val
+  }
+  return lastSegment.length > 2 && lastSegment.length < 30 ? lastSegment.toUpperCase() : 'NEWS'
+}
+
 // ─── SOCIAL SHARE ────────────────────────────────────────────────────────────
 
 const SHARE_PAGE_URL = 'https://andesvirustracker.com'
@@ -291,6 +309,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
   const [subscribed, setSubscribed] = useState(false)
   const [subscribing, setSubscribing] = useState(false)
   const [subError, setSubError] = useState('')
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
 
   // Live polling — refresh stats every 5 minutes
   useEffect(() => {
@@ -570,7 +589,8 @@ export default function Home({ stats: initialStats, news, events }: Props) {
             const url = isLive ? (n as any).source_url : (n as any).url
             const tag = isLive ? (n as any).tag : (n as any).tag
             const color = isLive ? (n as any).tag_color : (n as any).color
-            const source = isLive ? (n as any).source_label : (n as any).source
+            const rawSource = isLive ? (n as any).source_label : (n as any).source
+            const source = getRealSource(rawSource, title)
             const date = isLive ? new Date((n as any).published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : (n as any).date
             const imageUrl = isLive ? (n as any).image_url : undefined
             const domain = getDomain(url)
@@ -580,16 +600,13 @@ export default function Home({ stats: initialStats, news, events }: Props) {
               style={{ background: 'var(--bg-1)', display: 'block', textDecoration: 'none', transition: 'background 120ms', borderLeft: `3px solid ${color}` }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-2)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-1)')}>
-              {imageUrl && (
+              {imageUrl && !failedImages.has(imageUrl) && (
                 <div style={{ width: '100%', height: 180, overflow: 'hidden' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={'https://images.weserv.nl/?url=' + encodeURIComponent(imageUrl) + '&w=600&h=180&fit=cover&output=webp'}
                     alt=""
-                    onError={(e) => {
-                      console.log('[news-cover] failed to load (weserv):', imageUrl)
-                      e.currentTarget.parentElement!.style.display = 'none'
-                    }}
+                    onError={() => setFailedImages(prev => new Set([...prev, imageUrl]))}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
                 </div>
@@ -601,7 +618,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
                     {domain && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={`https://logo.clearbit.com/${domain}`}
+                        src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
                         alt=""
                         onError={(e) => {
                           console.log('[news-logo] failed to load:', domain)

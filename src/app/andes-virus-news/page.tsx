@@ -2,6 +2,16 @@ import type { Metadata } from 'next'
 import SiteNav from '@/components/SiteNav'
 import SiteFooter from '@/components/SiteFooter'
 import Link from 'next/link'
+import NewsImage from './NewsImage'
+
+// MARK: Local helper — extract a clean domain (used for source favicons)
+const getDomain = (url: string): string => {
+  try {
+    return new URL(url).hostname.replace('www.', '')
+  } catch {
+    return ''
+  }
+}
 
 // MARK: ISR — revalidate every 60s
 export const revalidate = 60
@@ -56,6 +66,7 @@ type Article = {
   body: string
   source_label: string
   source_url: string
+  image_url?: string
 }
 
 async function getNews(): Promise<Article[]> {
@@ -130,8 +141,9 @@ export default async function AndesVirusNewsPage() {
         headline: a.headline,
         body: a.body,
         sources: [{ label: a.source_label, url: a.source_url }],
+        image_url: a.image_url,
       }))
-    : TIMELINE
+    : TIMELINE.map((t) => ({ ...t, image_url: undefined as string | undefined }))
 
   const updatedLabel = articles[0]?.published_at
     ? new Date(articles[0].published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()
