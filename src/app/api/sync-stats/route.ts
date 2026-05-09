@@ -126,6 +126,30 @@ async function fetchFeed(url: string): Promise<{ title: string; summary: string;
   } catch { return [] }
 }
 
+// MARK: - Telegram alert
+async function postTelegramAlert(text: string, imageUrl?: string | null): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHANNEL_ID
+  if (!token || !chatId) return
+  try {
+    if (imageUrl) {
+      await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, photo: imageUrl, caption: text }),
+      })
+    } else {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: false }),
+      })
+    }
+  } catch (err) {
+    console.log('[sync-stats] telegram post error', err)
+  }
+}
+
 export async function GET(req: NextRequest) {
   // Allow Vercel cron (no auth header) or manual call with secret
   const auth = req.headers.get('authorization')
@@ -239,6 +263,44 @@ export async function GET(req: NextRequest) {
   // MARK: - Auto-ingest top RSS items into andes_news
   const newsInserted = await ingestRssIntoNews(allItems)
 
+  // MARK: - Telegram auto-post
+  const currentCases = current?.confirmed_cases ?? 0
+  const currentDeaths = current?.deaths ?? 0
+  const telegramAlerts: Promise<void>[] = []
+
+  // USA detection — flag any item mentioning US states, federal agencies, or country names
+  const US_PATTERNS = /\b(USA?|United\s+States|U\.S\.|americans?|CDC|FDA|HHS|White\s+House|Texas|California|New\s+York|Florida|Georgia|Virginia|New\s+Jersey|Arizona|Pennsylvania|Illinois|Ohio|Michigan|Washington|Massachusetts|Colorado|Oregon|Nevada|Hawaii|Alaska|Maryland|Tennessee|Missouri|Indiana|Wisconsin|Minnesota|Louisiana|Kentucky|Alabama|Mississippi|Arkansas|Iowa|Kansas|Oklahoma|Nebraska|Idaho|Montana|Utah|Maine|Vermont|Connecticut|Rhode\s+Island|Delaware|North\s+Carolina|South\s+Carolina|North\s+Dakota|South\s+Dakota|West\s+Virginia|New\s+Hampshire|New\s+Mexico|Puerto\s+Rico)\b/i
+
+  const isUSAItem = (item: { title: string; summary?: string }) =>
+    US_PATTERNS.test(item.title) || US_PATTERNS.test(item.summary || '')
+
+  // Find the latest USA-related article (priority over generic breaking)
+  const sortedByDate = [...allItems].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const latestUSA = sortedByDate.find(isUSAItem)
+
+  // Grab latest image from news for photo posts
+  const newsImage = newsInserted > 0
+    ? (await fetch(`${SUPABASE_URL}/rest/v1/andes_news?select=image_url&order=published_at.desc&limit=1`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }).then(r => r.ok ? r.json() : []).then((rows: {image_url: string|null}[]) => rows[0]?.image_url ?? null).catch(() => null))
+    : null
+
+  if (cases !== null && cases > currentCases) {
+    const usaTag = breaking && US_PATTERNS.test(breaking.text) ? '🇺🇸 ' : ''
+    const msg = `🔴 ${usaTag}ANDES VIRUS — NEW CASE CONFIRMED\n\n📊 Cases: ${currentCases} → ${cases}\n💀 Deaths: ${deaths ?? currentDeaths}\n🌍 ${countries ?? 0} countries monitoring\n🚢 MV Hondius · Antarctica 2026\n\n${breaking ? `📰 ${breaking.text.substring(0, 100)}\n\n` : ''}andesvirustracker.com`
+    telegramAlerts.push(postTelegramAlert(msg, newsImage))
+  } else if (deaths !== null && deaths > currentDeaths) {
+    const msg = `💀 ANDES VIRUS — DEATH TOLL UPDATE\n\n📊 Cases: ${cases ?? currentCases}\n💀 Deaths: ${currentDeaths} → ${deaths}\n⚠️ Case fatality rate: ~40%\n\nandesvirustracker.com`
+    telegramAlerts.push(postTelegramAlert(msg, newsImage))
+  } else if (latestUSA && newsInserted > 0) {
+    // USA-priority post: flagged with US flag, posted even on minor updates
+    const msg = `🇺🇸 ANDES VIRUS — US UPDATE\n\n${latestUSA.title.substring(0, 140)}\n\n📊 ${cases ?? currentCases} cases · 💀 ${deaths ?? currentDeaths} deaths globally\n🌍 ${countries ?? 0} countries monitoring · US is one of them\n\n🔗 ${latestUSA.url}\n\nandesvirustracker.com`
+    telegramAlerts.push(postTelegramAlert(msg, newsImage))
+  } else if (newsInserted > 0 && breaking) {
+    const msg = `📰 ANDES VIRUS UPDATE\n\n${breaking.text.substring(0, 140)}\n\n📊 ${cases ?? currentCases} cases · 💀 ${deaths ?? currentDeaths} deaths\n🌍 ${countries ?? 0} countries monitoring\n\n🔗 ${breaking.url}\n\nandesvirustracker.com`
+    telegramAlerts.push(postTelegramAlert(msg, newsImage))
+  }
+
+  await Promise.allSettled(telegramAlerts)
+
   return NextResponse.json({
     ok: true,
     extracted: { cases, deaths, countries, exposed, whoRiskLevel },
@@ -246,6 +308,7 @@ export async function GET(req: NextRequest) {
     articlesScanned: allItems.length,
     newsInserted,
     eventsInserted,
+    telegramAlertsSent: telegramAlerts.length,
   })
 }
 

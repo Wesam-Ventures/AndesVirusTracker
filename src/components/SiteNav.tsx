@@ -1,7 +1,9 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+
+const TELEGRAM_CHANNEL_URL = 'https://t.me/+vcbJYZ-5Ws1iOTUx'
 
 const NAV_LINKS = [
   { href: '/',                              label: 'Live Tracker' },
@@ -16,10 +18,37 @@ const NAV_LINKS = [
 export default function SiteNav() {
   const path = usePathname()
   const [open, setOpen] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(true)
+
+  useEffect(() => {
+    setBannerDismissed(localStorage.getItem('avt_tg_banner_dismissed') === '1')
+  }, [])
+
+  const dismissBanner = () => {
+    localStorage.setItem('avt_tg_banner_dismissed', '1')
+    setBannerDismissed(true)
+  }
 
   return (
     <>
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '10px 12px 0' }}>
+      {!bannerDismissed && (
+        <div style={{ position: 'sticky', top: 0, zIndex: 101, background: 'linear-gradient(90deg, #2AABEE 0%, #229ED9 100%)', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span className="font-mono" style={{ fontSize: 11, color: '#fff', letterSpacing: 0.5, fontWeight: 600 }}>
+            ✈️ Get instant alerts when new cases hit —
+          </span>
+          <a href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer"
+            className="font-mono"
+            style={{ background: '#fff', color: '#2AABEE', padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, letterSpacing: 0.5, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            JOIN TELEGRAM →
+          </a>
+          <button onClick={dismissBanner}
+            aria-label="Dismiss"
+            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 4px', position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}>
+            ✕
+          </button>
+        </div>
+      )}
+      <div style={{ position: 'sticky', top: bannerDismissed ? 0 : 'auto', zIndex: 100, padding: '10px 12px 0' }}>
         <nav className="glass" style={{ maxWidth: 960, margin: '0 auto', borderRadius: 12, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
 
           {/* Logo + LIVE */}

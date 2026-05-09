@@ -198,7 +198,7 @@ function IncubationCalc() {
           {[
             { label: 'EARLIEST SYMPTOMS', value: result.earliest, color: '#f59e0b' },
             { label: 'PEAK DANGER WINDOW', value: result.danger, color: '#ef4444' },
-            { label: 'LATEST ONSET', value: result.latest, color: '#64748b' },
+            { label: 'LATEST ONSET', value: result.latest, color: '#8899b0' },
           ].map(r => (
             <div key={r.label} style={{ background: 'var(--bg)', border: `1px solid ${r.color}30`, borderRadius: 8, padding: '12px', textAlign: 'center' }}>
               <div className="font-mono" style={{ fontSize: 8, color: r.color, letterSpacing: 1.5, marginBottom: 6 }}>{r.label}</div>
@@ -333,6 +333,7 @@ const SHARE_TWEET_URL =
   'https://twitter.com/intent/tweet?text=Live+Andes+virus+outbreak+tracker+—+8+cases%2C+3+deaths%2C+23+countries+monitoring.+The+only+hantavirus+that+spreads+person-to-person.&url=https%3A%2F%2Fandesvirustracker.com'
 const SHARE_WA_URL =
   'https://wa.me/?text=Live+Andes+virus+outbreak+tracker%3A+https%3A%2F%2Fandesvirustracker.com'
+const TELEGRAM_CHANNEL_URL = 'https://t.me/+vcbJYZ-5Ws1iOTUx'
 
 function ShareButtons() {
   const [copied, setCopied] = useState(false)
@@ -379,8 +380,12 @@ function ShareButtons() {
         style={{ ...pill, color: '#25D366' }}>
         WHATSAPP
       </a>
+      <a href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer"
+        style={{ ...pill, color: '#2AABEE' }}>
+        TELEGRAM
+      </a>
       <button onClick={handleCopy}
-        style={{ ...pill, color: copied ? '#4ade80' : '#94a3b8' }}>
+        style={{ ...pill, color: copied ? '#4ade80' : '#b0bfcf' }}>
         {copied ? 'COPIED!' : 'COPY LINK'}
       </button>
     </>
@@ -402,6 +407,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
   const [subscribing, setSubscribing] = useState(false)
   const [subError, setSubError] = useState('')
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
+  const [bookmarkHint, setBookmarkHint] = useState(false)
 
   // Live polling — refresh stats every 5 minutes
   useEffect(() => {
@@ -515,14 +521,12 @@ export default function Home({ stats: initialStats, news, events }: Props) {
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
-              onClick={() => {
-                console.log('[RetentionCTA] bookmark clicked')
-                try {
-                  // Legacy IE-only API; modern browsers fall through to the alert hint.
-                  ;(window as unknown as { external?: { AddFavorite?: (url: string, title: string) => void } })
-                    .external?.AddFavorite?.('https://andesvirustracker.com', 'Andes Virus Tracker')
-                } catch {
-                  alert('Press Ctrl+D (Windows) or Cmd+D (Mac) to bookmark this page')
+              onClick={async () => {
+                if (navigator.share) {
+                  try { await navigator.share({ title: 'Andes Virus Tracker', url: 'https://andesvirustracker.com' }) } catch { /* user cancelled */ }
+                } else {
+                  setBookmarkHint(true)
+                  setTimeout(() => setBookmarkHint(false), 4000)
                 }
               }}
               className="font-mono"
@@ -532,16 +536,25 @@ export default function Home({ stats: initialStats, news, events }: Props) {
                 padding: '5px 10px',
                 borderRadius: 20,
                 cursor: 'pointer',
-                border: '1px solid rgba(148,163,184,0.3)',
-                color: '#94a3b8',
+                border: '1px solid rgba(176,191,207,0.3)',
+                color: '#b0bfcf',
                 background: 'transparent',
               }}
             >
               BOOKMARK THIS PAGE
             </button>
+            {bookmarkHint && (
+              <span className="font-mono" style={{ fontSize: 9, color: '#f59e0b', letterSpacing: 1, alignSelf: 'center', whiteSpace: 'nowrap' }}>
+                Press {typeof navigator !== 'undefined' && /Mac/.test(navigator.platform) ? '⌘D' : 'Ctrl+D'}
+              </span>
+            )}
+            <a href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer"
+              className="font-mono"
+              style={{ fontSize: 10, letterSpacing: 1.5, padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(42,171,238,0.4)', color: '#2AABEE', background: 'rgba(42,171,238,0.08)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              JOIN TELEGRAM
+            </a>
             <button
               onClick={() => {
-                console.log('[RetentionCTA] get alerts clicked → scrolling to #alerts')
                 document.getElementById('alerts')?.scrollIntoView({ behavior: 'smooth' })
               }}
               className="font-mono"
@@ -969,7 +982,10 @@ export default function Home({ stats: initialStats, news, events }: Props) {
             <div className="font-mono" style={{ fontSize: 9, color: 'var(--green)', letterSpacing: 1.5, textAlign: 'center', marginBottom: 6 }}>SHARE THE TRACKER</div>
             <p style={{ fontSize: 16, color: 'var(--fg)', fontWeight: 700, lineHeight: 1.4, marginBottom: 6, textAlign: 'center' }}>Tell someone who needs to know</p>
             <p style={{ fontSize: 11, color: 'var(--fg-mute)', lineHeight: 1.5, textAlign: 'center' }}>Every share = more people informed</p>
-            <a href={SHARE_TWEET_URL} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ background: 'rgba(74,222,128,0.15)', border: '1px solid #4ade80', color: '#4ade80', borderRadius: 8, padding: '12px 24px', fontSize: 13, fontWeight: 800, letterSpacing: 1, display: 'block', textAlign: 'center', marginTop: 16, textDecoration: 'none' }}>SHARE NOW 📡</a>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href={SHARE_TWEET_URL} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ background: 'rgba(74,222,128,0.15)', border: '1px solid #4ade80', color: '#4ade80', borderRadius: 8, padding: '10px 20px', fontSize: 12, fontWeight: 800, letterSpacing: 1, textDecoration: 'none' }}>SHARE NOW 📡</a>
+              <a href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ background: 'rgba(42,171,238,0.12)', border: '1px solid #2AABEE', color: '#2AABEE', borderRadius: 8, padding: '10px 20px', fontSize: 12, fontWeight: 800, letterSpacing: 1, textDecoration: 'none' }}>JOIN TELEGRAM ✈️</a>
+            </div>
           </div>
         </div>
       </div>
@@ -999,26 +1015,12 @@ export default function Home({ stats: initialStats, news, events }: Props) {
           <div style={{ position: 'relative', zIndex: 1 }}>
             <p className="font-mono" style={{ fontSize: 9, color: 'var(--red)', letterSpacing: 3, marginBottom: 10 }}>OUTBREAK ALERTS</p>
             <h2 className="font-display" style={{ fontSize: 28, fontWeight: 800, color: 'var(--fg)', letterSpacing: 1, marginBottom: 8 }}>STAY INFORMED</h2>
-            <p style={{ fontSize: 13, color: 'var(--fg-mute)', marginBottom: 24, maxWidth: 380, margin: '0 auto 24px' }}>Immediate alerts when new Andes virus cases are confirmed. No spam.</p>
-            {subscribed ? (
-              <div className="font-mono" style={{ color: 'var(--green)', fontSize: 13 }}>✅ SUBSCRIBED — YOU&apos;LL BE ALERTED IMMEDIATELY</div>
-            ) : (
-              <div style={{ maxWidth: 400, margin: '0 auto' }}>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <input type="email" value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
-                    placeholder="your@email.com"
-                    className="font-mono"
-                    style={{ flex: 1, minWidth: 180, background: 'var(--bg)', border: `1px solid ${subError ? 'var(--red)' : 'var(--line-strong)'}`, borderRadius: 8, padding: '10px 14px', color: 'var(--fg)', fontSize: 12, outline: 'none' }} />
-                  <button onClick={handleSubscribe} disabled={subscribing}
-                    style={{ background: subscribing ? 'rgba(239,68,68,0.5)' : 'var(--red)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 11, fontWeight: 700, fontFamily: 'Space Mono, monospace', letterSpacing: 1, cursor: subscribing ? 'default' : 'pointer' }}>
-                    {subscribing ? '...' : 'SUBSCRIBE'}
-                  </button>
-                </div>
-                {subError && <p className="font-mono" style={{ fontSize: 9, color: 'var(--red)', marginTop: 8, letterSpacing: 1 }}>{subError}</p>}
-              </div>
-            )}
+            <p style={{ fontSize: 13, color: 'var(--fg-mute)', maxWidth: 380, margin: '0 auto 28px' }}>Auto-alerts the moment new cases are confirmed. Join the Telegram channel — free, no spam.</p>
+            <a href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer"
+              className="font-mono"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(42,171,238,0.15)', border: '1px solid #2AABEE', color: '#2AABEE', borderRadius: 10, padding: '14px 32px', fontSize: 14, fontWeight: 800, letterSpacing: 1, textDecoration: 'none' }}>
+              ✈️ JOIN TELEGRAM CHANNEL
+            </a>
           </div>
         </div>
       </div>
