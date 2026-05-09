@@ -3,9 +3,11 @@ import {
   buildDailyDigestCaption,
   buildNewsTelegramCaption,
   formatDailyChangeLine,
+  formatUSACountriesLine,
   type TelegramArticle,
   type TelegramStats,
 } from '@/lib/telegramCaptions'
+import { fetchArticleMeta, type ArticleMeta } from '@/lib/articleMeta'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -25,6 +27,7 @@ type NewsRow = {
   image_url?: string | null
   published_at?: string | null
 }
+type BackfillNewsRow = NewsRow & { id: number | string }
 
 // Extract the highest number matching a pattern across all text
 function extractMax(texts: string[], patterns: RegExp[]): number | null {
@@ -90,34 +93,6 @@ async function fetchWHORiskLevel(): Promise<string | null> {
     } catch { continue }
   }
   return null
-}
-
-// MARK: - OG image fetcher
-// Fetches an article URL with a 4s timeout and returns the og:image URL, or null on
-// any failure (network error, timeout, missing meta tag, non-OK response).
-async function fetchOGImage(url: string): Promise<string | null> {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 4000)
-  try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'AndesVirusTracker/1.0' },
-    })
-    if (!res.ok) {
-      console.log('[sync-stats] og:image fetch non-OK', res.status, url)
-      return null
-    }
-    const html = await res.text()
-    const match =
-      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
-      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
-    return match ? match[1] : null
-  } catch (err) {
-    console.log('[sync-stats] og:image fetch error', url, err instanceof Error ? err.message : err)
-    return null
-  } finally {
-    clearTimeout(timeout)
-  }
 }
 
 async function fetchFeed(url: string): Promise<FeedItem[]> {
@@ -361,6 +336,7 @@ export async function GET(req: NextRequest) {
 
   // MARK: - Auto-ingest top RSS items into andes_news
   const newsInserted = await ingestRssIntoNews(allItems)
+  const newsBackfilled = await backfillNewsDescriptions()
 
   // MARK: - Telegram auto-post
   const currentCases = current?.confirmed_cases ?? 0
@@ -408,7 +384,7 @@ export async function GET(req: NextRequest) {
       const msg = buildNewsTelegramCaption({
         title: '🇺🇸 ANDES VIRUS — US UPDATE',
         stats: finalTelegramStats,
-        countriesLine: `🌍 ${finalTelegramStats.countries} countries monitoring · US is one of them`,
+        countriesLine: formatUSACountriesLine(finalTelegramStats.countries),
         article,
       })
       telegramAlerts.push(postTelegramAlert(msg, latestUSANewsRow?.image_url ?? newsImage))
@@ -486,6 +462,7 @@ export async function GET(req: NextRequest) {
     updates,
     articlesScanned: allItems.length,
     newsInserted,
+    newsBackfilled,
     eventsInserted,
     telegramAlertsSent: telegramAlerts.length,
     digestSent,
@@ -695,18 +672,18 @@ async function ingestRssIntoNews(
 
   console.log('[sync-stats] candidate news items:', top.length, 'of', unique.length, 'unique')
 
-  // MARK: - Pre-fetch og:image in parallel (Promise.allSettled so one failure
+  // MARK: - Pre-fetch article metadata in parallel (Promise.allSettled so one failure
   // doesn't block others). Concurrency is naturally capped at 5 because `top`
   // is sliced to 5 above.
-  const imageResults = await Promise.allSettled(
-    top.map(item => (item.url ? fetchOGImage(item.url) : Promise.resolve(null))),
+  const metaResults = await Promise.allSettled(
+    top.map(item => (item.url ? fetchArticleMeta(item.url) : Promise.resolve({ image: null, description: null }))),
   )
-  const imageByUrl = new Map<string, string | null>()
+  const metaByUrl = new Map<string, ArticleMeta>()
   top.forEach((item, idx) => {
-    const r = imageResults[idx]
-    const value = r.status === 'fulfilled' ? r.value : null
-    imageByUrl.set(item.url, value)
-    console.log('[sync-stats] og:image resolved', item.url, '->', value)
+    const r = metaResults[idx]
+    const value = r.status === 'fulfilled' ? r.value : { image: null, description: null }
+    metaByUrl.set(item.url, value)
+    console.log('[sync-stats] article meta resolved', item.url, 'image:', value.image, 'description:', value.description)
   })
 
   let inserted = 0
@@ -721,9 +698,10 @@ async function ingestRssIntoNews(
 
     const headline = item.title.substring(0, 300)
     const summaryText = (item.summary || '').trim()
-    const body = (summaryText ? summaryText : headline).substring(0, 500)
+    const meta = metaByUrl.get(item.url) ?? { image: null, description: null }
+    const body = (meta.description || summaryText || headline).substring(0, 500)
     const publishedAt = item.date ? new Date(item.date).toISOString() : new Date().toISOString()
-    const imageUrl = imageByUrl.get(item.url) ?? null
+    const imageUrl = meta.image ?? null
 
     const payload = {
       headline,
@@ -759,4 +737,69 @@ async function ingestRssIntoNews(
 
   console.log('[sync-stats] news inserted total:', inserted)
   return inserted
+}
+
+async function backfillNewsDescriptions(): Promise<number> {
+  console.log('[sync-stats] loading news description backfill candidates')
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/andes_news?select=id,headline,body,source_url,image_url,published_at&order=published_at.desc&limit=25`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+    )
+
+    if (!res.ok) {
+      console.log('[sync-stats] news backfill candidate load failed', res.status)
+      return 0
+    }
+
+    const rows = await res.json()
+    const candidates = (Array.isArray(rows) ? (rows as BackfillNewsRow[]) : [])
+      .filter(row => row.source_url && (row.body ?? '').trim() === row.headline.trim())
+      .slice(0, 5)
+
+    if (candidates.length === 0) {
+      console.log('[sync-stats] no news descriptions need backfill')
+      return 0
+    }
+
+    console.log('[sync-stats] news description backfill candidates:', candidates.length)
+
+    const updates = await Promise.all(candidates.map(async row => {
+      const { description } = await fetchArticleMeta(row.source_url)
+      const body = description?.substring(0, 500)
+
+      if (!body || body === row.body) {
+        console.log('[sync-stats] skip news backfill without usable description', row.id, row.source_url)
+        return false
+      }
+
+      console.log('[sync-stats] updating news description backfill', row.id, row.source_url)
+      const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/andes_news?id=eq.${encodeURIComponent(String(row.id))}`, {
+        method: 'PATCH',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ body }),
+      })
+
+      if (patchRes.ok) {
+        return true
+      } else {
+        const errText = await patchRes.text().catch(() => '')
+        console.log('[sync-stats] news description backfill failed', patchRes.status, errText)
+        return false
+      }
+    }))
+
+    const updated = updates.filter(Boolean).length
+    console.log('[sync-stats] news descriptions backfilled total:', updated)
+    return updated
+  } catch (err) {
+    console.log('[sync-stats] news description backfill error', err)
+    return 0
+  }
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildDailyDigestCaption,
   buildNewsTelegramCaption,
+  formatUSACountriesLine,
   formatDailyChangeLine,
   summarizeArticleBrief,
 } from './telegramCaptions'
@@ -46,6 +47,11 @@ describe('telegram caption helpers', () => {
 
   it('formats daily change from the best available 24h Supabase snapshot', () => {
     expect(formatDailyChangeLine(stats, { cases: 8, deaths: 3 })).toBe('📈 24h change: +2 cases · no new deaths')
+  })
+
+  it('does not claim the US is one of zero monitored countries', () => {
+    expect(formatUSACountriesLine(0)).toBe('🇺🇸 US-related update')
+    expect(formatUSACountriesLine(23)).toBe('🌍 23 countries monitoring · US is one of them')
   })
 
   it('adds the top story and change line to daily digest captions', () => {

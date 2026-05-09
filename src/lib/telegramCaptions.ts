@@ -71,6 +71,10 @@ export function formatDailyChangeLine(
   return `📈 24h change: ${caseText} · ${deathText}`
 }
 
+export function formatUSACountriesLine(countries: number): string {
+  return countries > 0 ? `🌍 ${countries} countries monitoring · US is one of them` : '🇺🇸 US-related update'
+}
+
 export function buildNewsTelegramCaption(input: NewsCaptionInput): string {
   const { title, stats, countriesLine, article } = input
   const countryText = countriesLine ?? `🌍 ${stats.countries} countries monitoring`
