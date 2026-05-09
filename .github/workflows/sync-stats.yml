@@ -2,8 +2,11 @@ name: Sync Outbreak Stats
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # every 15 minutes
-  workflow_dispatch:         # allow manual trigger from GitHub UI
+    - cron: '0 * * * *'   # top of every hour
+    - cron: '15 * * * *'  # :15 past every hour
+    - cron: '30 * * * *'  # :30 past every hour
+    - cron: '45 * * * *'  # :45 past every hour
+  workflow_dispatch:       # manual trigger from GitHub UI
 
 jobs:
   sync:
@@ -14,5 +17,5 @@ jobs:
           curl -sf "https://andesvirustracker.com/api/sync-stats" \
             -H "x-vercel-cron: 1" \
             --max-time 30 \
-            | jq '{ok, articlesScanned, updates: (.updates | {last_updated, day_count, breaking_news})}' \
+            | jq '{ok, articlesScanned, newsInserted, updates: (.updates | {last_updated, day_count, breaking_news})}' \
             || echo "sync failed or no updates"
