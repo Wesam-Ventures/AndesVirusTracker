@@ -216,6 +216,98 @@ function IncubationCalc() {
   )
 }
 
+// ─── MONITORING COUNTDOWN ────────────────────────────────────────────────────
+
+function MonitoringCountdown() {
+  const [daysRemaining, setDaysRemaining] = useState<number | null>(null)
+
+  useEffect(() => {
+    const calc = () => {
+      const end = new Date('2026-05-31')
+      const now = new Date()
+      const days = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86400000))
+      console.log('[MonitoringCountdown] computed days remaining →', days, '(end:', end.toISOString(), ')')
+      setDaysRemaining(days)
+    }
+    calc()
+    // Recompute hourly so the counter stays accurate without a full reload
+    const id = setInterval(calc, 60 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const isClosed = daysRemaining === 0
+  const accent = isClosed ? '#4ade80' : '#f59e0b'
+
+  return (
+    <div style={{
+      background: 'var(--bg-1)',
+      border: `1px solid ${isClosed ? 'rgba(74,222,128,0.3)' : 'rgba(245,158,11,0.3)'}`,
+      borderRadius: 10,
+      padding: '16px 20px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 20,
+      flexWrap: 'wrap',
+    }}>
+      {/* LEFT — clock icon + label */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '0 0 auto' }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 8,
+          background: `${accent}1f`,
+          border: `1px solid ${accent}40`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </div>
+        <div>
+          <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 2 }}>PASSENGER MONITORING</div>
+          <div className="font-mono" style={{ fontSize: 9, color: accent, letterSpacing: 1, marginTop: 2 }}>WINDOW · MV HONDIUS</div>
+        </div>
+      </div>
+
+      {/* CENTER — countdown */}
+      <div style={{ flex: 1, minWidth: 180, textAlign: 'center' }}>
+        {isClosed ? (
+          <div className="font-display" style={{ fontSize: 18, fontWeight: 800, color: accent, letterSpacing: 2 }}>
+            MONITORING WINDOW CLOSED
+          </div>
+        ) : (
+          <>
+            <div className="font-display" style={{ fontSize: 38, fontWeight: 900, color: accent, letterSpacing: -1, lineHeight: 1 }}>
+              {daysRemaining ?? '—'}
+            </div>
+            <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1.2, marginTop: 6 }}>
+              days remaining in MV Hondius incubation monitoring window
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* RIGHT — CTA */}
+      <div style={{ flex: '0 0 auto' }}>
+        <a href="#risk" className="font-mono" style={{
+          background: 'rgba(239,68,68,0.1)',
+          border: '1px solid rgba(239,68,68,0.4)',
+          color: 'var(--red)',
+          borderRadius: 8,
+          padding: '10px 16px',
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: 1.2,
+          textDecoration: 'none',
+          display: 'inline-block',
+          whiteSpace: 'nowrap',
+        }}>
+          WERE YOU ON THE SHIP? →
+        </a>
+      </div>
+    </div>
+  )
+}
+
 // ─── SOURCE LABEL HELPER ─────────────────────────────────────────────────────
 
 function getRealSource(label: string, title: string): string {
@@ -403,6 +495,72 @@ export default function Home({ stats: initialStats, news, events }: Props) {
           )})}
         </div>
 
+        {/* RETENTION CTA */}
+        <div style={{
+          background: 'rgba(239,68,68,0.06)',
+          borderTop: '1px solid rgba(239,68,68,0.15)',
+          borderBottom: '1px solid rgba(239,68,68,0.15)',
+          padding: '10px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 10,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="blink" style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }} />
+            <span className="font-mono" style={{ fontSize: 12, color: 'var(--fg)' }}>
+              OUTBREAK ACTIVE — New cases expected as monitoring window closes May 31
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => {
+                console.log('[RetentionCTA] bookmark clicked')
+                try {
+                  // Legacy IE-only API; modern browsers fall through to the alert hint.
+                  ;(window as unknown as { external?: { AddFavorite?: (url: string, title: string) => void } })
+                    .external?.AddFavorite?.('https://andesvirustracker.com', 'Andes Virus Tracker')
+                } catch {
+                  alert('Press Ctrl+D (Windows) or Cmd+D (Mac) to bookmark this page')
+                }
+              }}
+              className="font-mono"
+              style={{
+                fontSize: 10,
+                letterSpacing: 1.5,
+                padding: '5px 10px',
+                borderRadius: 20,
+                cursor: 'pointer',
+                border: '1px solid rgba(148,163,184,0.3)',
+                color: '#94a3b8',
+                background: 'transparent',
+              }}
+            >
+              BOOKMARK THIS PAGE
+            </button>
+            <button
+              onClick={() => {
+                console.log('[RetentionCTA] get alerts clicked → scrolling to #alerts')
+                document.getElementById('alerts')?.scrollIntoView({ behavior: 'smooth' })
+              }}
+              className="font-mono"
+              style={{
+                fontSize: 10,
+                letterSpacing: 1.5,
+                padding: '5px 10px',
+                borderRadius: 20,
+                cursor: 'pointer',
+                border: '1px solid rgba(239,68,68,0.4)',
+                color: '#ef4444',
+                background: 'rgba(239,68,68,0.08)',
+              }}
+            >
+              GET ALERTS
+            </button>
+          </div>
+        </div>
+
         {/* MOBILE SHARE ROW — desktop uses fixed bar at bottom-right */}
         <div className="flex md:hidden" style={{ justifyContent: 'center', gap: 6, marginTop: 16 }}>
           <ShareButtons />
@@ -457,6 +615,124 @@ export default function Home({ stats: initialStats, news, events }: Props) {
               <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1, marginTop: 2 }}>P2P CONFIRMED</div>
             </div>
             <a href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599" target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 8, color: 'var(--blue)', letterSpacing: 1, textDecoration: 'none' }}>WHO →</a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MONITORING COUNTDOWN ── */}
+      <div style={{ maxWidth: 900, margin: '16px auto 0', padding: '0 16px' }}>
+        <MonitoringCountdown />
+      </div>
+
+      {/* ── US STATES MONITORING ── */}
+      <div style={{ maxWidth: 900, margin: '16px auto 0', padding: '0 16px' }}>
+        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line-strong)', borderRadius: 10, padding: '16px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            <div>
+              <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 2 }}>UNITED STATES MONITORING</div>
+              <div style={{ fontSize: 12, color: 'var(--fg-mute)', marginTop: 4 }}>6 states actively monitoring returned MV Hondius passengers</div>
+            </div>
+            <div className="font-mono" style={{ fontSize: 10, color: '#3b82f6', letterSpacing: 1.5, fontWeight: 700 }}>
+              6 STATES · ACTIVE
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 8 }}>
+            {['Texas', 'Georgia', 'Arizona', 'Virginia', 'California', 'New Jersey'].map(state => (
+              <div key={state} style={{
+                background: 'var(--bg-2)',
+                border: '1px solid rgba(59,130,246,0.25)',
+                borderRadius: 8,
+                padding: '10px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}>
+                <span style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 600 }}>{state}</span>
+                <span className="font-mono" style={{
+                  fontSize: 8,
+                  letterSpacing: 1.2,
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  border: '1px solid rgba(59,130,246,0.4)',
+                  background: 'rgba(59,130,246,0.12)',
+                  color: '#3b82f6',
+                  fontWeight: 700,
+                }}>
+                  MONITORING
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-strong)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', opacity: 0.7, letterSpacing: 1 }}>
+              SOURCE: CDC / STATE HEALTH DEPARTMENTS
+            </span>
+            <a href="#risk" className="font-mono" style={{ fontSize: 10, color: 'var(--red)', letterSpacing: 1.2, textDecoration: 'none', fontWeight: 700 }}>
+              TRACK YOUR EXPOSURE RISK →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── OUTBREAK TRAJECTORY ── */}
+      <div style={{ maxWidth: 900, margin: '16px auto 0', padding: '0 16px' }}>
+        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line-strong)', borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '0 0 auto' }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 8,
+              background: 'rgba(245,158,11,0.12)',
+              border: '1px solid rgba(245,158,11,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+            </div>
+            <div>
+              <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 2 }}>OUTBREAK TRAJECTORY</div>
+              <div className="font-mono" style={{ fontSize: 9, color: '#f59e0b', letterSpacing: 1, marginTop: 2 }}>CASE CONFIRMATION RATE</div>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, minWidth: 220, display: 'flex', gap: 6 }}>
+            {[
+              { l: 'ESCALATING', c: '#ef4444', sym: '↑', a: false },
+              { l: 'STABLE',     c: '#f59e0b', sym: '→', a: true },
+              { l: 'RESOLVING',  c: '#4ade80', sym: '↓', a: false },
+            ].map(t => (
+              <div key={t.l} style={{
+                flex: 1,
+                background: t.a ? `${t.c}15` : 'var(--bg-2)',
+                border: `1px solid ${t.a ? `${t.c}60` : 'var(--line)'}`,
+                borderRadius: 8,
+                padding: '8px 6px',
+                textAlign: 'center',
+                opacity: t.a ? 1 : 0.45,
+                boxShadow: t.a ? `0 0 12px ${t.c}30` : 'none',
+                transition: 'opacity 200ms',
+              }}>
+                <div style={{ fontSize: 16, color: t.c, fontWeight: 700, lineHeight: 1 }}>{t.sym}</div>
+                <div className="font-mono" style={{ fontSize: 9, color: t.c, letterSpacing: 1.2, marginTop: 4, fontWeight: 700 }}>
+                  {t.l}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, padding: '6px 14px', textAlign: 'center' }}>
+              <div className="font-mono" style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', letterSpacing: 2 }}>STABLE</div>
+              <div className="font-mono" style={{ fontSize: 9, color: 'var(--fg-mute)', letterSpacing: 1, marginTop: 2 }}>MONITORING</div>
+            </div>
+          </div>
+
+          <div style={{ flexBasis: '100%' }}>
+            <p className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', opacity: 0.6, letterSpacing: 1, marginTop: 4 }}>
+              BASED ON WHO/ECDC CASE CONFIRMATION RATE
+            </p>
           </div>
         </div>
       </div>

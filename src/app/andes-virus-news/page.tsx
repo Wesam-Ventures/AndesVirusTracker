@@ -149,64 +149,200 @@ export default async function AndesVirusNewsPage() {
     ? new Date(articles[0].published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()
     : 'MAY 7, 2026'
 
+  // MARK: Hero is the first article; the rest go into the grid
+  const hero = items[0]
+  const rest = items.slice(1)
+  const heroUrl = hero?.sources[0]?.url || '#'
+  const heroDomain = hero ? getDomain(heroUrl) : ''
+  console.log('[andes-virus-news] hero & grid split', { hasHero: !!hero, gridCount: rest.length, heroHasImage: !!hero?.image_url })
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {newsJsonLd.map((s, i) => (
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
       ))}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+
       <SiteNav />
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 16px 0' }}>
-        <p className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 3, marginBottom: 12 }}>OUTBREAK TIMELINE · UPDATED {updatedLabel}</p>
-        <h1 className="font-display" style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, color: 'var(--fg)', letterSpacing: 0.5, lineHeight: 1.1, marginBottom: 8 }}>
-          Andes Virus News<br /><span style={{ color: 'var(--red)' }}>2026 Outbreak Updates</span>
+      {/* Local responsive sizing for the hero card */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .news-hero-card { height: 280px; }
+        @media (min-width: 768px) { .news-hero-card { height: 420px; } }
+        .news-grid-card { transition: background 150ms ease, transform 150ms ease; }
+        .news-grid-card:hover { background: var(--bg-2) !important; }
+      ` }} />
+
+      <main style={{ maxWidth: 900, margin: '0 auto', padding: '32px 16px 64px' }}>
+
+        {/* ── BREADCRUMB ─────────────────────────────────────────────── */}
+        <nav className="font-mono" style={{ marginBottom: 28, fontSize: 10, letterSpacing: 1.5 }}>
+          <Link href="/" style={{ color: 'var(--fg-mute)', textDecoration: 'none' }}>HOME</Link>
+          <span style={{ color: 'var(--fg-dim)', margin: '0 10px' }}>/</span>
+          <span style={{ color: 'var(--fg)' }}>NEWS</span>
+        </nav>
+
+        {/* ── PAGE HEADER ────────────────────────────────────────────── */}
+        <p className="font-mono" style={{ fontSize: 11, color: 'var(--fg-mute)', letterSpacing: 3, marginBottom: 14 }}>
+          INTELLIGENCE FEED
+        </p>
+        <h1 className="font-display" style={{ fontSize: 'clamp(32px, 6vw, 60px)', fontWeight: 900, color: 'var(--fg)', lineHeight: 1, letterSpacing: -1, marginBottom: 14 }}>
+          Andes Virus News
+          <br />
+          <span style={{ color: 'var(--red)' }}>2026 Outbreak Updates</span>
         </h1>
-        <p style={{ fontSize: 14, color: 'var(--fg-mute)', lineHeight: 1.7, marginBottom: 32 }}>
+        <p style={{ fontSize: 14, color: 'var(--fg-mute)', lineHeight: 1.7, marginBottom: 28, maxWidth: 680 }}>
           Chronological timeline of the 2026 Andes virus outbreak linked to the MV Hondius polar expedition cruise. All updates sourced from WHO, CDC, ECDC, and credible news organizations.
         </p>
 
-        {/* Status bar */}
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line-strong)', borderRadius: 10, padding: '12px 16px', display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
-          {[
-            { label: 'CONFIRMED CASES', value: '8', color: 'var(--red)' },
-            { label: 'DEATHS', value: '3', color: 'var(--red)' },
-            { label: 'COUNTRIES', value: '23', color: 'var(--amber)' },
-            { label: 'LAST UPDATE', value: 'May 7', color: 'var(--blue)' },
-          ].map(s => (
-            <div key={s.label}>
-              <div className="font-mono" style={{ fontSize: 18, color: s.color, fontWeight: 700 }}>{s.value}</div>
-              <div className="font-mono" style={{ fontSize: 8, color: 'var(--fg-dim)', letterSpacing: 2 }}>{s.label}</div>
+        {/* ── STATS BAR ──────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', gap: 36, padding: '16px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', marginBottom: 36, flexWrap: 'wrap' }}>
+          <div>
+            <div className="font-mono" style={{ fontSize: 22, color: 'var(--fg)', fontWeight: 700, lineHeight: 1 }}>{items.length}</div>
+            <div className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 2, marginTop: 6 }}>ARTICLES</div>
+          </div>
+          <div>
+            <div className="font-mono" style={{ fontSize: 22, color: 'var(--blue)', fontWeight: 700, lineHeight: 1 }}>{updatedLabel}</div>
+            <div className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 2, marginTop: 6 }}>LAST UPDATED</div>
+          </div>
+          <div>
+            <div className="font-mono" style={{ fontSize: 22, color: 'var(--green)', fontWeight: 700, lineHeight: 1, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <span className="blink" style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 10px #4ade80', display: 'inline-block' }} />
+              LIVE
             </div>
-          ))}
-        </div>
-
-        {/* Timeline */}
-        <div style={{ position: 'relative' }}>
-          <div style={{ position: 'absolute', left: 7, top: 0, bottom: 0, width: 1, background: 'var(--line)' }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {items.map((item, i) => (
-              <div key={i} style={{ paddingLeft: 28, position: 'relative' }}>
-                <div style={{ position: 'absolute', left: 0, top: 6, width: 15, height: 15, borderRadius: '50%', background: item.color, boxShadow: `0 0 8px ${item.color}60`, zIndex: 1 }} />
-                <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line)', borderRadius: 10, padding: '16px' }}>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
-                    <span className="font-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, border: `1px solid ${item.color}50`, color: item.color, background: `${item.color}12`, letterSpacing: 1 }}>{item.tag}</span>
-                    <span className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)' }}>{item.date}</span>
-                  </div>
-                  <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--fg)', lineHeight: 1.4, marginBottom: 8 }}>{item.headline}</h2>
-                  <p style={{ fontSize: 13, color: 'var(--fg-mute)', lineHeight: 1.7, marginBottom: 10 }}>{item.body}</p>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {item.sources.map(s => (
-                      <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 9, color: 'var(--blue)', textDecoration: 'none', letterSpacing: 1 }}>↗ {s.label}</a>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
+            <div className="font-mono" style={{ fontSize: 9, color: 'var(--fg-dim)', letterSpacing: 2, marginTop: 6 }}>FEED STATUS</div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 40, marginBottom: 32 }}>
+        {/* ── EMPTY STATE ────────────────────────────────────────────── */}
+        {items.length === 0 && (
+          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line)', borderRadius: 12, padding: '80px 24px', textAlign: 'center' }}>
+            <div className="font-mono" style={{ fontSize: 11, color: 'var(--fg-dim)', letterSpacing: 2, marginBottom: 12 }}>NO SIGNAL</div>
+            <p style={{ fontSize: 16, color: 'var(--fg-mute)' }}>No articles yet — check back soon</p>
+          </div>
+        )}
+
+        {/* ── HERO ARTICLE ───────────────────────────────────────────── */}
+        {hero && (
+          <a
+            href={heroUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={'news-hero-card' + (!hero.image_url ? ' hazard-stripe' : '')}
+            style={{
+              display: 'block',
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: 14,
+              marginBottom: 32,
+              textDecoration: 'none',
+              border: '1px solid var(--line-strong)',
+              background: hero.image_url
+                ? `linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.85) 100%), url("${hero.image_url}") center/cover no-repeat`
+                : 'var(--bg-1)',
+            }}
+          >
+            {/* Top-left meta strip */}
+            <div style={{ position: 'absolute', top: 18, left: 18, right: 18, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span className="font-mono" style={{ fontSize: 9, padding: '4px 8px', borderRadius: 4, border: `1px solid ${hero.color}80`, color: hero.color, background: `${hero.color}25`, letterSpacing: 1.5, fontWeight: 700, backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+                {hero.tag}
+              </span>
+              <span className="font-mono" style={{ fontSize: 10, color: '#fff', letterSpacing: 1, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.55)', padding: '4px 8px', borderRadius: 4, backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+                {heroDomain && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`https://www.google.com/s2/favicons?domain=${heroDomain}&sz=32`}
+                    alt=""
+                    style={{ width: 12, height: 12, borderRadius: 2, objectFit: 'cover' }}
+                  />
+                )}
+                {hero.sources[0]?.label}
+              </span>
+              <span className="font-mono" style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, background: 'rgba(0,0,0,0.55)', padding: '4px 8px', borderRadius: 4, backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+                {hero.date}
+              </span>
+            </div>
+
+            {/* Bottom content */}
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 28px 26px' }}>
+              <h2 className="font-display" style={{ fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 900, color: '#fff', lineHeight: 1.1, letterSpacing: -0.5, marginBottom: 12, textShadow: '0 2px 14px rgba(0,0,0,0.55)' }}>
+                {hero.headline}
+              </h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, marginBottom: 14, maxWidth: 720, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                {hero.body}
+              </p>
+              <span className="font-mono" style={{ fontSize: 11, color: 'var(--red)', letterSpacing: 2, fontWeight: 700 }}>
+                READ FULL ARTICLE →
+              </span>
+            </div>
+          </a>
+        )}
+
+        {/* ── ARTICLE GRID ───────────────────────────────────────────── */}
+        {rest.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 14 }}>
+            {rest.map((item, i) => {
+              const url = item.sources[0]?.url || '#'
+              const domain = getDomain(url)
+              return (
+                <a
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="news-grid-card"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: 'var(--bg-1)',
+                    border: '1px solid var(--line)',
+                    borderLeft: `3px solid ${item.color}`,
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                    textDecoration: 'none',
+                  }}
+                >
+                  {item.image_url && <NewsImage src={item.image_url} height={200} />}
+                  <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' }}>
+                      <span className="font-mono" style={{ fontSize: 9, padding: '3px 9px', borderRadius: 999, border: `1px solid ${item.color}55`, color: item.color, background: `${item.color}15`, letterSpacing: 1.5, fontWeight: 700 }}>
+                        {item.tag}
+                      </span>
+                      <span className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1, marginLeft: 'auto' }}>
+                        {item.date}
+                      </span>
+                    </div>
+                    <h3 className="font-display" style={{ fontSize: 16, fontWeight: 700, color: 'var(--fg)', lineHeight: 1.3, marginBottom: 8, letterSpacing: -0.2 }}>
+                      {item.headline}
+                    </h3>
+                    <p style={{ fontSize: 12.5, color: 'var(--fg-mute)', lineHeight: 1.6, marginBottom: 14, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {item.body}
+                    </p>
+                    <div style={{ marginTop: 'auto', paddingTop: 10, borderTop: '1px dashed var(--line-strong)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {domain && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
+                            alt=""
+                            style={{ width: 14, height: 14, borderRadius: 2, objectFit: 'cover' }}
+                          />
+                        )}
+                        {item.sources[0]?.label}
+                      </span>
+                      <span className="font-mono" style={{ fontSize: 10, color: 'var(--red)', letterSpacing: 1.5, fontWeight: 700 }}>
+                        READ →
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ── BOTTOM NAV CTAs ────────────────────────────────────────── */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 40 }}>
           <Link href="/" style={{ flex: 1, minWidth: 160, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '14px', textDecoration: 'none', textAlign: 'center' }}>
             <div className="font-mono" style={{ fontSize: 9, color: 'var(--red)', letterSpacing: 2, marginBottom: 4 }}>LIVE →</div>
             <div style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 600 }}>Live Case Counter & Map</div>
