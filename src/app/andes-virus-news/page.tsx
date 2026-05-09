@@ -70,8 +70,14 @@ type Article = {
 }
 
 async function getNews(): Promise<Article[]> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1/andes_news?select=*&order=published_at.desc&limit=30'
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+  if (!supabaseUrl || !key) {
+    console.log('[andes-virus-news] getNews: missing Supabase config, falling back to TIMELINE')
+    return []
+  }
+
+  const url = `${supabaseUrl}/rest/v1/andes_news?select=*&order=published_at.desc&limit=30`
   console.log('[andes-virus-news] getNews: fetching live articles', { url })
   try {
     const res = await fetch(url, { headers: { apikey: key, Authorization: 'Bearer ' + key }, next: { revalidate: 60 } })

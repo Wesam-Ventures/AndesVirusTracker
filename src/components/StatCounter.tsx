@@ -1,5 +1,4 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
 
 interface Props {
   target: number
@@ -8,33 +7,12 @@ interface Props {
   suffix?: string
 }
 
-export default function StatCounter({ target, duration = 1800, prefix = '', suffix = '' }: Props) {
-  const [count, setCount] = useState(0)
-  const ref = useRef<HTMLSpanElement>(null)
-  const started = useRef(false)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !started.current) {
-        started.current = true
-        const start = Date.now()
-        const tick = () => {
-          const elapsed = Date.now() - start
-          const progress = Math.min(elapsed / duration, 1)
-          const eased = 1 - Math.pow(1 - progress, 3)
-          setCount(Math.round(eased * target))
-          if (progress < 1) requestAnimationFrame(tick)
-        }
-        requestAnimationFrame(tick)
-      }
-    }, { threshold: 0.3 })
-    if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [target, duration])
+export default function StatCounter({ target, prefix = '', suffix = '' }: Props) {
+  console.log('[StatCounter] display target loaded →', target)
 
   return (
-    <span ref={ref} style={{ fontVariantNumeric: 'tabular-nums' }}>
-      {prefix}{count.toLocaleString()}{suffix}
+    <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+      {prefix}{target.toLocaleString()}{suffix}
     </span>
   )
 }

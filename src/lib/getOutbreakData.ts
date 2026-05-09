@@ -1,8 +1,9 @@
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1'
-const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+const URL = SUPABASE_URL ? `${SUPABASE_URL}/rest/v1` : ''
 
 const headers = {
-  apikey: KEY,
+  apikey: KEY ?? '',
   Authorization: `Bearer ${KEY}`,
   'Content-Type': 'application/json',
 }
@@ -44,6 +45,7 @@ export interface OutbreakEvent {
 
 export async function getOutbreakStats(): Promise<OutbreakStats> {
   try {
+    if (!URL || !KEY) throw new Error('Missing Supabase configuration')
     const res = await fetch(`${URL}/andes_stats?select=*&id=eq.1`, {
       headers,
       next: { revalidate: 60 }, // refresh every 60 seconds
@@ -69,6 +71,7 @@ export async function getOutbreakStats(): Promise<OutbreakStats> {
 
 export async function getOutbreakNews(): Promise<OutbreakNews[]> {
   try {
+    if (!URL || !KEY) throw new Error('Missing Supabase configuration')
     const res = await fetch(`${URL}/andes_news?select=*&order=published_at.desc&limit=6`, {
       headers,
       next: { revalidate: 60 },
@@ -82,6 +85,7 @@ export async function getOutbreakNews(): Promise<OutbreakNews[]> {
 
 export async function getOutbreakEvents(): Promise<OutbreakEvent[]> {
   try {
+    if (!URL || !KEY) throw new Error('Missing Supabase configuration')
     const res = await fetch(`${URL}/andes_events?select=*&order=event_date.desc`, {
       headers,
       next: { revalidate: 60 },

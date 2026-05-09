@@ -401,7 +401,10 @@ interface Props {
 }
 
 export default function Home({ stats: initialStats, news, events }: Props) {
-  const [stats, setStats] = useState<OutbreakStats>(initialStats)
+  const [stats, setStats] = useState<OutbreakStats>(() => {
+    console.log('[HomeClient] initial stats loaded from SSR props →', initialStats)
+    return initialStats
+  })
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
   const [subscribing, setSubscribing] = useState(false)
@@ -419,9 +422,14 @@ export default function Home({ stats: initialStats, news, events }: Props) {
         )
         if (res.ok) {
           const [row] = await res.json()
-          if (row) setStats(row)
+          if (row) {
+            console.log('[HomeClient] refreshed stats loaded →', row)
+            setStats(row)
+          }
         }
-      } catch { /* keep existing stats on error */ }
+      } catch (err) {
+        console.log('[HomeClient] stats refresh failed; keeping SSR stats visible', err)
+      }
     }
     const id = setInterval(fetchStats, 5 * 60 * 1000)
     return () => clearInterval(id)

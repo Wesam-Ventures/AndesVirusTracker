@@ -2,11 +2,16 @@ import { NextResponse } from 'next/server'
 
 export const revalidate = 60
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` }
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+const headers = { apikey: KEY ?? '', Authorization: `Bearer ${KEY}` }
 
 async function fetchAll() {
+  if (!URL || !KEY) {
+    console.log('[api/data] missing Supabase config; serving fallback payload')
+    return { stats: {}, news: [], events: [] }
+  }
+
   const [statsRes, newsRes, eventsRes] = await Promise.all([
     fetch(`${URL}/rest/v1/andes_stats?id=eq.1&select=*`, { headers }),
     fetch(`${URL}/rest/v1/andes_news?select=*&order=published_at.desc&limit=10`, { headers }),

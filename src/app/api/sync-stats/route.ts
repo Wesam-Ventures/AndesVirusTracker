@@ -1,4 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import {
+  buildDailyDigestCaption,
+  buildNewsTelegramCaption,
+  formatDailyChangeLine,
+  type TelegramArticle,
+  type TelegramStats,
+} from '@/lib/telegramCaptions'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -8,6 +15,16 @@ const RSS_FEEDS = [
   'https://www.google.com/alerts/feeds/05208475767620682448/2344984621188625173',
   'https://www.google.com/alerts/feeds/05208475767620682448/12897857962816603385',
 ]
+
+type FeedItem = { title: string; summary: string; url: string; date: string }
+type BreakingItem = { text: string; url: string; summary?: string } | null
+type NewsRow = {
+  headline: string
+  body: string | null
+  source_url: string
+  image_url?: string | null
+  published_at?: string | null
+}
 
 // Extract the highest number matching a pattern across all text
 function extractMax(texts: string[], patterns: RegExp[]): number | null {
@@ -24,16 +41,18 @@ function extractMax(texts: string[], patterns: RegExp[]): number | null {
   return max
 }
 
-function extractLatestBreaking(items: { title: string; url: string; date: string }[]): { text: string; url: string } | null {
+function extractLatestBreaking(items: FeedItem[]): BreakingItem {
   // Pick the most recent item that looks like a case update
   const keywords = /case|death|confirm|outbreak|victim|infect|kill|spread/i
   const sorted = [...items].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   for (const item of sorted) {
     if (keywords.test(item.title)) {
-      return { text: item.title.replace(/ - [^-]+$/, '').trim(), url: item.url }
+      return { text: item.title.replace(/ - [^-]+$/, '').trim(), url: item.url, summary: item.summary }
     }
   }
-  return sorted[0] ? { text: sorted[0].title.replace(/ - [^-]+$/, '').trim(), url: sorted[0].url } : null
+  return sorted[0]
+    ? { text: sorted[0].title.replace(/ - [^-]+$/, '').trim(), url: sorted[0].url, summary: sorted[0].summary }
+    : null
 }
 
 // WHO sources to scrape for official risk level
@@ -101,12 +120,12 @@ async function fetchOGImage(url: string): Promise<string | null> {
   }
 }
 
-async function fetchFeed(url: string): Promise<{ title: string; summary: string; url: string; date: string }[]> {
+async function fetchFeed(url: string): Promise<FeedItem[]> {
   try {
     const res = await fetch(url, { headers: { 'User-Agent': 'AndesVirusTracker/1.0' }, next: { revalidate: 0 } })
     if (!res.ok) return []
     const xml = await res.text()
-    const items: { title: string; summary: string; url: string; date: string }[] = []
+    const items: FeedItem[] = []
     const entryRegex = /<entry>([\s\S]*?)<\/entry>/g
     let match
     while ((match = entryRegex.exec(xml)) !== null) {
@@ -132,21 +151,99 @@ async function postTelegramAlert(text: string, imageUrl?: string | null): Promis
   const chatId = process.env.TELEGRAM_CHANNEL_ID
   if (!token || !chatId) return
   try {
+    let res: Response
     if (imageUrl) {
-      await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+      res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: chatId, photo: imageUrl, caption: text }),
       })
     } else {
-      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: false }),
       })
     }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      console.log('[sync-stats] telegram post failed', res.status, body)
+    }
   } catch (err) {
     console.log('[sync-stats] telegram post error', err)
+  }
+}
+
+// MARK: - Telegram caption data helpers
+async function fetchNewsRowByUrl(sourceUrl: string | undefined): Promise<NewsRow | null> {
+  if (!sourceUrl) return null
+  try {
+    const encoded = encodeURIComponent(sourceUrl)
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/andes_news?select=headline,body,source_url,image_url,published_at&source_url=eq.${encoded}&limit=1`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+    )
+    if (!res.ok) {
+      console.log('[sync-stats] news brief lookup failed', res.status, sourceUrl)
+      return null
+    }
+    const rows = await res.json()
+    return Array.isArray(rows) ? rows[0] ?? null : null
+  } catch (err) {
+    console.log('[sync-stats] news brief lookup error', err)
+    return null
+  }
+}
+
+async function fetchLatestNewsRow(): Promise<NewsRow | null> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/andes_news?select=headline,body,source_url,image_url,published_at&order=published_at.desc&limit=1`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+    )
+    if (!res.ok) {
+      console.log('[sync-stats] latest news lookup failed', res.status)
+      return null
+    }
+    const rows = await res.json()
+    return Array.isArray(rows) ? rows[0] ?? null : null
+  } catch (err) {
+    console.log('[sync-stats] latest news lookup error', err)
+    return null
+  }
+}
+
+async function fetchStatsSnapshot24hAgo(): Promise<Pick<TelegramStats, 'cases' | 'deaths'> | null> {
+  const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/andes_events?select=cases,deaths,event_date&event_date=eq.${cutoffDate}&order=event_date.desc&limit=1`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+    )
+    if (!res.ok) {
+      console.log('[sync-stats] 24h stats snapshot lookup failed', res.status)
+      return null
+    }
+    const rows = await res.json()
+    const row = Array.isArray(rows) ? rows[0] : null
+    if (!row || typeof row.cases !== 'number' || typeof row.deaths !== 'number') return null
+    return { cases: row.cases, deaths: row.deaths }
+  } catch (err) {
+    console.log('[sync-stats] 24h stats snapshot lookup error', err)
+    return null
+  }
+}
+
+function toTelegramArticle(item: FeedItem | BreakingItem, row?: NewsRow | null): TelegramArticle | null {
+  if (!item && !row) return null
+  const itemHeadline = item && 'text' in item ? item.text : item?.title
+  const itemSummary = item?.summary ?? null
+  const itemUrl = item?.url
+
+  return {
+    headline: row?.headline ?? itemHeadline ?? 'Andes virus update',
+    body: row?.body ?? itemSummary,
+    url: row?.source_url ?? itemUrl ?? 'https://andesvirustracker.com',
   }
 }
 
@@ -249,7 +346,9 @@ export async function GET(req: NextRequest) {
     body: JSON.stringify(updates),
   })
 
-  const updated = patchRes.ok ? await patchRes.json() : null
+  if (patchRes.ok) {
+    await patchRes.json().catch(() => null)
+  }
 
   // MARK: - Auto-insert andes_events on stat increases
   const eventsInserted = await insertEventsForIncreases({
@@ -266,6 +365,7 @@ export async function GET(req: NextRequest) {
   // MARK: - Telegram auto-post
   const currentCases = current?.confirmed_cases ?? 0
   const currentDeaths = current?.deaths ?? 0
+  const currentCountries = current?.countries_monitoring ?? 0
   const telegramAlerts: Promise<void>[] = []
 
   // USA detection — flag any item mentioning US states, federal agencies, or country names
@@ -283,6 +383,17 @@ export async function GET(req: NextRequest) {
     ? (await fetch(`${SUPABASE_URL}/rest/v1/andes_news?select=image_url&order=published_at.desc&limit=1`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }).then(r => r.ok ? r.json() : []).then((rows: {image_url: string|null}[]) => rows[0]?.image_url ?? null).catch(() => null))
     : null
 
+  const finalTelegramStats: TelegramStats = {
+    cases: typeof updates.confirmed_cases === 'number' ? updates.confirmed_cases : cases ?? currentCases,
+    deaths: typeof updates.deaths === 'number' ? updates.deaths : deaths ?? currentDeaths,
+    countries: typeof updates.countries_monitoring === 'number' ? updates.countries_monitoring : countries ?? currentCountries,
+  }
+
+  const [latestUSANewsRow, breakingNewsRow] = await Promise.all([
+    latestUSA ? fetchNewsRowByUrl(latestUSA.url) : Promise.resolve(null),
+    breaking ? fetchNewsRowByUrl(breaking.url) : Promise.resolve(null),
+  ])
+
   if (cases !== null && cases > currentCases) {
     const usaTag = breaking && US_PATTERNS.test(breaking.text) ? '🇺🇸 ' : ''
     const msg = `🔴 ${usaTag}ANDES VIRUS — NEW CASE CONFIRMED\n\n📊 Cases: ${currentCases} → ${cases}\n💀 Deaths: ${deaths ?? currentDeaths}\n🌍 ${countries ?? 0} countries monitoring\n🚢 MV Hondius · Antarctica 2026\n\n${breaking ? `📰 ${breaking.text.substring(0, 100)}\n\n` : ''}andesvirustracker.com`
@@ -292,11 +403,26 @@ export async function GET(req: NextRequest) {
     telegramAlerts.push(postTelegramAlert(msg, newsImage))
   } else if (latestUSA && newsInserted > 0) {
     // USA-priority post: flagged with US flag, posted even on minor updates
-    const msg = `🇺🇸 ANDES VIRUS — US UPDATE\n\n${latestUSA.title.substring(0, 140)}\n\n📊 ${cases ?? currentCases} cases · 💀 ${deaths ?? currentDeaths} deaths globally\n🌍 ${countries ?? 0} countries monitoring · US is one of them\n\n🔗 ${latestUSA.url}\n\nandesvirustracker.com`
-    telegramAlerts.push(postTelegramAlert(msg, newsImage))
+    const article = toTelegramArticle(latestUSA, latestUSANewsRow)
+    if (article) {
+      const msg = buildNewsTelegramCaption({
+        title: '🇺🇸 ANDES VIRUS — US UPDATE',
+        stats: finalTelegramStats,
+        countriesLine: `🌍 ${finalTelegramStats.countries} countries monitoring · US is one of them`,
+        article,
+      })
+      telegramAlerts.push(postTelegramAlert(msg, latestUSANewsRow?.image_url ?? newsImage))
+    }
   } else if (newsInserted > 0 && breaking) {
-    const msg = `📰 ANDES VIRUS UPDATE\n\n${breaking.text.substring(0, 140)}\n\n📊 ${cases ?? currentCases} cases · 💀 ${deaths ?? currentDeaths} deaths\n🌍 ${countries ?? 0} countries monitoring\n\n🔗 ${breaking.url}\n\nandesvirustracker.com`
-    telegramAlerts.push(postTelegramAlert(msg, newsImage))
+    const article = toTelegramArticle(breaking, breakingNewsRow)
+    if (article) {
+      const msg = buildNewsTelegramCaption({
+        title: '📰 ANDES VIRUS UPDATE',
+        stats: finalTelegramStats,
+        article,
+      })
+      telegramAlerts.push(postTelegramAlert(msg, breakingNewsRow?.image_url ?? newsImage))
+    }
   }
 
   // MARK: - Daily heartbeat digest
@@ -317,10 +443,26 @@ export async function GET(req: NextRequest) {
     if (shouldSendDigest) {
       const finalCases = updates.confirmed_cases ?? currentCases
       const finalDeaths = updates.deaths ?? currentDeaths
-      const finalCountries = updates.countries_monitoring ?? current?.countries_monitoring ?? 0
+      const finalCountries = updates.countries_monitoring ?? currentCountries
       const riskLevel = updates.who_risk_level ?? current?.who_risk_level ?? 'MODERATE'
-      const digestMsg = `📊 ANDES VIRUS — DAILY UPDATE (Day ${dayCount})\n\n🦠 ${finalCases} confirmed cases · 💀 ${finalDeaths} deaths\n🌍 ${finalCountries} countries monitoring\n⚠️ WHO risk level: ${riskLevel}\n\n${breaking ? `📰 ${breaking.text.substring(0, 140)}\n🔗 ${breaking.url}\n\n` : ''}andesvirustracker.com`
-      telegramAlerts.push(postTelegramAlert(digestMsg, newsImage))
+      const digestStats: TelegramStats = {
+        cases: typeof finalCases === 'number' ? finalCases : currentCases,
+        deaths: typeof finalDeaths === 'number' ? finalDeaths : currentDeaths,
+        countries: typeof finalCountries === 'number' ? finalCountries : currentCountries,
+      }
+      const [previousStats, latestNewsRow] = await Promise.all([
+        fetchStatsSnapshot24hAgo(),
+        breaking ? Promise.resolve(breakingNewsRow) : fetchLatestNewsRow(),
+      ])
+      const digestArticle = toTelegramArticle(breaking, latestNewsRow)
+      const digestMsg = buildDailyDigestCaption({
+        dayCount,
+        stats: digestStats,
+        riskLevel: String(riskLevel),
+        changeLine: formatDailyChangeLine(digestStats, previousStats),
+        article: digestArticle,
+      })
+      telegramAlerts.push(postTelegramAlert(digestMsg, latestNewsRow?.image_url ?? newsImage))
       digestSent = true
 
       // Persist digest timestamp so we don't re-fire within 20 h
@@ -357,8 +499,6 @@ type CurrentStats = {
   deaths?: number | null
   countries_monitoring?: number | null
 } | null | undefined
-
-type BreakingItem = { text: string; url: string } | null
 
 async function postEvent(payload: Record<string, unknown>): Promise<boolean> {
   console.log('[sync-stats] inserting event', payload.tag, payload.event)
