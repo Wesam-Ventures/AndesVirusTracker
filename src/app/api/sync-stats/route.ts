@@ -285,7 +285,9 @@ export async function GET(req: NextRequest) {
   }
 
   if (cases !== null && cases > (current?.confirmed_cases ?? 0)) updates.confirmed_cases = cases
-  if (deaths !== null && deaths > (current?.deaths ?? 0)) updates.deaths = deaths
+  // Deaths can't exceed confirmed cases — guards against scrapers pulling historical hantavirus death counts
+  const confirmedCases = cases ?? current?.confirmed_cases ?? 99
+  if (deaths !== null && deaths > (current?.deaths ?? 0) && deaths <= confirmedCases) updates.deaths = deaths
   if (countries !== null && countries > (current?.countries_monitoring ?? 0)) updates.countries_monitoring = countries
   if (exposed !== null && exposed > (current?.exposed_passengers ?? 0)) updates.exposed_passengers = exposed
 
