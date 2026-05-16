@@ -122,6 +122,7 @@ async function fetchFeed(url: string): Promise<FeedItem[]> {
 
 // MARK: - Telegram alert
 async function postTelegramAlert(text: string, imageUrl?: string | null): Promise<void> {
+  if (process.env.TELEGRAM_PAUSED === 'true') return
   const token = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHANNEL_ID
   if (!token || !chatId) return
