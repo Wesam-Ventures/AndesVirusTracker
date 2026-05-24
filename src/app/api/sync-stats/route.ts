@@ -223,10 +223,10 @@ function toTelegramArticle(item: FeedItem | BreakingItem, row?: NewsRow | null):
 }
 
 export async function GET(req: NextRequest) {
-  // Allow Vercel cron (no auth header) or manual call with secret
-  const auth = req.headers.get('authorization')
+  // Allow Vercel cron or manual call with INGEST_SECRET header
+  const secret = req.headers.get('x-ingest-secret')
   const cronHeader = req.headers.get('x-vercel-cron')
-  if (!cronHeader && auth !== `Bearer ${process.env.SYNC_SECRET}`) {
+  if (!cronHeader && secret !== process.env.INGEST_SECRET) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
