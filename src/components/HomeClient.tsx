@@ -54,7 +54,7 @@ const SYMPTOMS = [
 const FAQS = [
   { q: 'Can Andes virus spread between humans?', a: 'Yes — Andes virus is the only hantavirus confirmed to spread person-to-person. Transmission requires prolonged close contact (sharing a bed, food). It does not spread through the air like COVID-19.' },
   { q: 'Is Andes virus the same as hantavirus?', a: 'Andes virus (ANDV) is a specific strain of hantavirus, uniquely dangerous because it can spread human-to-human. All other hantavirus strains only spread from infected rodents to humans.' },
-  { q: 'What happened on the MV Hondius?', a: 'In April–May 2026, 8 passengers on the Antarctic cruise ship MV Hondius were confirmed infected with Andes virus. 3 died. Over 62 passengers from 23 nationalities are being actively monitored.' },
+  { q: 'What happened on the MV Hondius?', a: 'In April–May 2026, 11 total cases (9 confirmed, 2 probable) were linked to the Antarctic cruise ship MV Hondius. 3 people died. Over 173 passengers and crew from 23 nationalities were monitored. The ship docked in Rotterdam, Netherlands on May 18 for disinfection.' },
   { q: 'How deadly is Andes virus?', a: 'The case fatality rate is approximately 40%. It causes hantavirus pulmonary syndrome (HPS) with rapid respiratory failure. Early ICU admission improves outcomes significantly.' },
   { q: 'Is there a vaccine or treatment?', a: 'No approved vaccine or antiviral exists for hantavirus. Supportive ICU care is the primary treatment. Early hospitalization at first symptoms is critical.' },
 ]
@@ -330,7 +330,7 @@ function getRealSource(label: string, title: string): string {
 
 const SHARE_PAGE_URL = 'https://andesvirustracker.com'
 const SHARE_TWEET_URL =
-  'https://twitter.com/intent/tweet?text=Live+Andes+virus+outbreak+tracker+—+8+cases%2C+3+deaths%2C+23+countries+monitoring.+The+only+hantavirus+that+spreads+person-to-person.&url=https%3A%2F%2Fandesvirustracker.com'
+  'https://twitter.com/intent/tweet?text=Live+Andes+virus+outbreak+tracker+—+11+cases%2C+3+deaths%2C+23+countries+monitoring.+The+only+hantavirus+that+spreads+person-to-person.&url=https%3A%2F%2Fandesvirustracker.com'
 const SHARE_WA_URL =
   'https://wa.me/?text=Live+Andes+virus+outbreak+tracker%3A+https%3A%2F%2Fandesvirustracker.com'
 const TELEGRAM_CHANNEL_URL = 'https://t.me/+vcbJYZ-5Ws1iOTUx'

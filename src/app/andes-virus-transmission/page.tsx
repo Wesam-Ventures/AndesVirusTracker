@@ -66,7 +66,7 @@ export default function TransmissionPage() {
 
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 16 }}>THE MV HONDIUS OUTBREAK — 2026</h2>
         <p style={{ fontSize: 14, color: 'var(--fg-mute)', lineHeight: 1.8, marginBottom: 24 }}>
-          In April–May 2026, the polar expedition cruise ship MV Hondius experienced a confirmed Andes virus cluster. At least 8 passengers were infected, 3 died, and 62+ are under active monitoring across 23 countries. WHO confirmed the strain as Andes virus on May 6, 2026 — the first multi-country person-to-person outbreak of Andes virus ever documented on a vessel.
+          In April–May 2026, the polar expedition cruise ship MV Hondius experienced a confirmed Andes virus cluster. 11 total cases (9 confirmed, 2 probable) were identified, 3 died, and 173+ passengers and crew from 23 countries were monitored. The ship docked in Rotterdam on May 18 for disinfection. WHO confirmed the Andes strain on May 6, 2026 — the first multi-country person-to-person outbreak of Andes virus ever documented on a vessel.
         </p>
 
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', letterSpacing: 1, marginBottom: 16 }}>WHO IS AT RISK?</h2>

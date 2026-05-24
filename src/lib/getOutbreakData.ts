@@ -84,14 +84,14 @@ export async function getOutbreakStats(): Promise<OutbreakStats> {
     console.error('[getOutbreakStats] falling back to defaults:', err)
     // Fallback to hardcoded values if Supabase is unreachable
     return {
-      confirmed_cases: 8,
+      confirmed_cases: 9,
       deaths: 3,
       countries_monitoring: 23,
-      exposed_passengers: 62,
+      exposed_passengers: 173,
       who_risk_level: 'MODERATE',
-      breaking_news: 'Swiss passenger confirmed positive for Andes virus post MV Hondius cruise — May 7, 2026',
-      breaking_news_url: 'https://globalnews.ca/news/11836710/hantavirus-cruise-ship-andes-strain-new-case-confirmed-switzerland/',
-      day_count: 15,
+      breaking_news: 'MV Hondius docks in Rotterdam for disinfection — 11 total cases, 3 deaths, no new cases since May 15',
+      breaking_news_url: 'https://www.nbcnews.com/health/health-news/hantavirus-cruise-ship-hondius-docks-rotterdam-netherlands-disinfect-rcna345631',
+      day_count: 26,
       last_updated: new Date().toISOString(),
     }
   }
