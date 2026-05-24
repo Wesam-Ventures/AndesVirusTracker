@@ -120,11 +120,13 @@ async function fetchFeed(url: string): Promise<FeedItem[]> {
 }
 
 // MARK: - Telegram alert
-async function postTelegramAlert(text: string, imageUrl?: string | null): Promise<void> {
-  if (process.env.TELEGRAM_PAUSED === 'true') return
+type TelegramResult = { ok: boolean; status: number; body: string; paused?: boolean; missingEnv?: boolean }
+
+async function postTelegramAlert(text: string, imageUrl?: string | null): Promise<TelegramResult> {
+  if (process.env.TELEGRAM_PAUSED === 'true') return { ok: false, status: 0, body: 'paused', paused: true }
   const token = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHANNEL_ID
-  if (!token || !chatId) return
+  if (!token || !chatId) return { ok: false, status: 0, body: `missing env: token=${!!token} chatId=${!!chatId}`, missingEnv: true }
   try {
     let res: Response
     if (imageUrl) {
@@ -140,12 +142,13 @@ async function postTelegramAlert(text: string, imageUrl?: string | null): Promis
         body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: false }),
       })
     }
-    if (!res.ok) {
-      const body = await res.text().catch(() => '')
-      console.log('[sync-stats] telegram post failed', res.status, body)
-    }
+    const body = await res.text().catch(() => '')
+    if (!res.ok) console.log('[sync-stats] telegram post failed', res.status, body)
+    return { ok: res.ok, status: res.status, body }
   } catch (err) {
-    console.log('[sync-stats] telegram post error', err)
+    const msg = err instanceof Error ? err.message : String(err)
+    console.log('[sync-stats] telegram post error', msg)
+    return { ok: false, status: 0, body: msg }
   }
 }
 
@@ -344,7 +347,7 @@ export async function GET(req: NextRequest) {
   const currentCases = current?.confirmed_cases ?? 0
   const currentDeaths = current?.deaths ?? 0
   const currentCountries = current?.countries_monitoring ?? 0
-  const telegramAlerts: Promise<void>[] = []
+  const telegramAlerts: Promise<TelegramResult>[] = []
 
   // USA detection — flag any item mentioning US states, federal agencies, or country names
   const US_PATTERNS = /\b(USA?|United\s+States|U\.S\.|americans?|CDC|FDA|HHS|White\s+House|Texas|California|New\s+York|Florida|Georgia|Virginia|New\s+Jersey|Arizona|Pennsylvania|Illinois|Ohio|Michigan|Washington|Massachusetts|Colorado|Oregon|Nevada|Hawaii|Alaska|Maryland|Tennessee|Missouri|Indiana|Wisconsin|Minnesota|Louisiana|Kentucky|Alabama|Mississippi|Arkansas|Iowa|Kansas|Oklahoma|Nebraska|Idaho|Montana|Utah|Maine|Vermont|Connecticut|Rhode\s+Island|Delaware|North\s+Carolina|South\s+Carolina|North\s+Dakota|South\s+Dakota|West\s+Virginia|New\s+Hampshire|New\s+Mexico|Puerto\s+Rico)\b/i
@@ -444,7 +447,8 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  await Promise.allSettled(telegramAlerts)
+  const telegramResults = await Promise.allSettled(telegramAlerts)
+  const telegramDebug = telegramResults.map(r => r.status === 'fulfilled' ? r.value : { ok: false, status: 0, body: String((r as PromiseRejectedResult).reason) })
 
   return NextResponse.json({
     ok: true,
@@ -455,6 +459,7 @@ export async function GET(req: NextRequest) {
     newsBackfilled,
     eventsInserted,
     telegramAlertsSent: telegramAlerts.length,
+    telegramDebug,
     digestSent,
   })
 }
