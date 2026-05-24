@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  buildDailyDigestCaption,
+  buildWeeklyDigestCaption,
   buildNewsTelegramCaption,
   formatDailyChangeLine,
-  formatUSACountriesLine,
   type TelegramArticle,
   type TelegramStats,
 } from '@/lib/telegramCaptions'
@@ -368,45 +367,35 @@ export async function GET(req: NextRequest) {
     countries: typeof updates.countries_monitoring === 'number' ? updates.countries_monitoring : countries ?? currentCountries,
   }
 
-  const [latestUSANewsRow, breakingNewsRow] = await Promise.all([
+  const [, breakingNewsRow] = await Promise.all([
     latestUSA ? fetchNewsRowByUrl(latestUSA.url) : Promise.resolve(null),
     breaking ? fetchNewsRowByUrl(breaking.url) : Promise.resolve(null),
   ])
 
   if (cases !== null && cases > currentCases) {
-    const usaTag = breaking && US_PATTERNS.test(breaking.text) ? '🇺🇸 ' : ''
-    const msg = `🔴 ${usaTag}ANDES VIRUS — NEW CASE CONFIRMED\n\n📊 Cases: ${currentCases} → ${cases}\n💀 Deaths: ${deaths ?? currentDeaths}\n🌍 ${countries ?? 0} countries monitoring\n🚢 MV Hondius · Antarctica 2026\n\n${breaking ? `📰 ${breaking.text.substring(0, 100)}\n\n` : ''}andesvirustracker.com`
-    telegramAlerts.push(postTelegramAlert(msg, newsImage))
-  } else if (deaths !== null && deaths > currentDeaths) {
-    const msg = `💀 ANDES VIRUS — DEATH TOLL UPDATE\n\n📊 Cases: ${cases ?? currentCases}\n💀 Deaths: ${currentDeaths} → ${deaths}\n⚠️ Case fatality rate: ~40%\n\nandesvirustracker.com`
-    telegramAlerts.push(postTelegramAlert(msg, newsImage))
-  } else if (latestUSA && newsInserted > 0) {
-    // USA-priority post: flagged with US flag, posted even on minor updates
-    const article = toTelegramArticle(latestUSA, latestUSANewsRow)
-    if (article) {
-      const msg = buildNewsTelegramCaption({
-        title: '🇺🇸 ANDES VIRUS — US UPDATE',
-        stats: finalTelegramStats,
-        countriesLine: formatUSACountriesLine(finalTelegramStats.countries),
-        article,
-      })
-      telegramAlerts.push(postTelegramAlert(msg, latestUSANewsRow?.image_url ?? newsImage))
-    }
-  } else if (newsInserted > 0 && breaking) {
+    // Immediate alert on new confirmed case — always fires, includes summary
     const article = toTelegramArticle(breaking, breakingNewsRow)
-    if (article) {
-      const msg = buildNewsTelegramCaption({
-        title: '📰 ANDES VIRUS UPDATE',
-        stats: finalTelegramStats,
-        article,
-      })
-      telegramAlerts.push(postTelegramAlert(msg, breakingNewsRow?.image_url ?? newsImage))
-    }
+    const summaryLine = article ? `\n\n${buildNewsTelegramCaption({ title: '', stats: finalTelegramStats, article }).split('\n\n').slice(3).join('\n\n')}` : ''
+    const usaTag = breaking && US_PATTERNS.test(breaking.text) ? '🇺🇸 ' : ''
+    const msg = buildNewsTelegramCaption({
+      title: `🔴 ${usaTag}NEW CASE CONFIRMED — ANDES VIRUS`,
+      stats: { ...finalTelegramStats, cases },
+      article: article ?? { headline: 'MV Hondius outbreak update', body: null, url: 'https://andesvirustracker.com' },
+    })
+    telegramAlerts.push(postTelegramAlert(msg, breakingNewsRow?.image_url ?? newsImage))
+  } else if (deaths !== null && deaths > currentDeaths) {
+    // Immediate alert on new death
+    const article = toTelegramArticle(breaking, breakingNewsRow)
+    const msg = buildNewsTelegramCaption({
+      title: '💀 DEATH TOLL UPDATE — ANDES VIRUS',
+      stats: { ...finalTelegramStats, deaths },
+      article: article ?? { headline: 'MV Hondius outbreak update', body: null, url: 'https://andesvirustracker.com' },
+    })
+    telegramAlerts.push(postTelegramAlert(msg, breakingNewsRow?.image_url ?? newsImage))
   }
 
-  // MARK: - Daily heartbeat digest
-  // Fires once per day (UTC) when no other alert was queued, so the channel never
-  // looks dead during quiet news cycles. Manual override via ?digest=1.
+  // MARK: - Weekly digest
+  // Fires once per week when no case/death alert was queued. Manual override via ?digest=1.
   const url = new URL(req.url)
   const forceDigest = url.searchParams.get('digest') === '1'
   let digestSent = false
@@ -414,10 +403,7 @@ export async function GET(req: NextRequest) {
   if (telegramAlerts.length === 0) {
     const lastDigestAt = current?.last_telegram_digest_at ? new Date(current.last_telegram_digest_at) : null
     const hoursSince = lastDigestAt ? (Date.now() - lastDigestAt.getTime()) / (1000 * 60 * 60) : Infinity
-    const nowUtc = new Date()
-    // Window: 14:00–14:59 UTC = 9:00–9:59 AM CT (10 AM CDT during daylight savings)
-    const inDigestWindow = nowUtc.getUTCHours() === 14
-    const shouldSendDigest = forceDigest || (inDigestWindow && hoursSince >= 20)
+    const shouldSendDigest = forceDigest || hoursSince >= 168
 
     if (shouldSendDigest) {
       const finalCases = updates.confirmed_cases ?? currentCases
@@ -434,17 +420,18 @@ export async function GET(req: NextRequest) {
         breaking ? Promise.resolve(breakingNewsRow) : fetchLatestNewsRow(),
       ])
       const digestArticle = toTelegramArticle(breaking, latestNewsRow)
-      const digestMsg = buildDailyDigestCaption({
+      const digestMsg = buildWeeklyDigestCaption({
         dayCount,
         stats: digestStats,
         riskLevel: String(riskLevel),
         changeLine: formatDailyChangeLine(digestStats, previousStats),
         article: digestArticle,
       })
+      const nowUtc = new Date()
       telegramAlerts.push(postTelegramAlert(digestMsg, latestNewsRow?.image_url ?? newsImage))
       digestSent = true
 
-      // Persist digest timestamp so we don't re-fire within 20 h
+      // Persist digest timestamp so we don't re-fire within 7 days
       await fetch(`${SUPABASE_URL}/rest/v1/andes_stats?id=eq.1`, {
         method: 'PATCH',
         headers: {

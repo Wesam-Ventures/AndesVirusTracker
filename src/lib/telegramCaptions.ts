@@ -92,11 +92,11 @@ export function buildNewsTelegramCaption(input: NewsCaptionInput): string {
   ].join('\n\n'), TELEGRAM_PHOTO_CAPTION_LIMIT)
 }
 
-export function buildDailyDigestCaption(input: DailyDigestCaptionInput): string {
+export function buildWeeklyDigestCaption(input: DailyDigestCaptionInput): string {
   const { dayCount, stats, riskLevel, changeLine, article } = input
   const reportLink = `${FULL_REPORT_LABEL} ${article?.url ?? 'https://andesvirustracker.com'}`
   const lines = [
-    `📊 ANDES VIRUS — DAILY UPDATE (Day ${dayCount})`,
+    `📊 ANDES VIRUS — WEEKLY UPDATE (Day ${dayCount})`,
     `🦠 ${stats.cases} confirmed cases · 💀 ${stats.deaths} deaths`,
     `🌍 ${stats.countries} countries monitoring`,
     `⚠️ WHO risk level: ${riskLevel}`,
@@ -105,10 +105,13 @@ export function buildDailyDigestCaption(input: DailyDigestCaptionInput): string 
   if (changeLine) lines.push(changeLine)
   if (article) {
     const fixedLength = [...lines, reportLink].join('\n\n').length
-    const briefBudget = Math.max(180, Math.min(460, CAPTION_SAFETY_LIMIT - fixedLength - 20))
-    lines.push(`📰 Top story: ${summarizeArticleBrief(article, briefBudget)}`)
+    const briefBudget = Math.max(250, Math.min(500, CAPTION_SAFETY_LIMIT - fixedLength - 20))
+    lines.push(summarizeArticleBrief(article, briefBudget))
   }
   lines.push(reportLink)
 
   return trimAtWord(lines.join('\n\n'), TELEGRAM_PHOTO_CAPTION_LIMIT)
 }
+
+/** @deprecated Use buildWeeklyDigestCaption */
+export const buildDailyDigestCaption = buildWeeklyDigestCaption
