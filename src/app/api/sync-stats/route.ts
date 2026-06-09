@@ -10,6 +10,8 @@ import { fetchArticleMeta, type ArticleMeta } from '@/lib/articleMeta'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Service role key bypasses RLS — required for andes_events inserts
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? SUPABASE_KEY
 
 const RSS_FEEDS = [
   'https://www.google.com/alerts/feeds/05208475767620682448/16790464954089800949',
@@ -478,8 +480,8 @@ async function postEvent(payload: Record<string, unknown>): Promise<boolean> {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/andes_events`, {
       method: 'POST',
       headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },
