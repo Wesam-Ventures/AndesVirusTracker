@@ -227,12 +227,22 @@ function toTelegramArticle(item: FeedItem | BreakingItem, row?: NewsRow | null):
   }
 }
 
+// Outbreak declared over by WHO on 2026-07-02 (DON611). The stats are frozen at
+// their final values (13 cases, 3 deaths, 33 countries) and the RSS scraper is
+// disabled — it was pulling unrelated headlines and never let numbers go down,
+// which poisoned the counts. Flip to false only if a new related cluster emerges.
+const OUTBREAK_CONCLUDED = true
+
 export async function GET(req: NextRequest) {
   // Allow Vercel cron or manual call with INGEST_SECRET header
   const secret = req.headers.get('x-ingest-secret')
   const cronHeader = req.headers.get('x-vercel-cron')
   if (!cronHeader && secret !== process.env.INGEST_SECRET) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  if (OUTBREAK_CONCLUDED) {
+    return NextResponse.json({ ok: true, frozen: true, reason: 'outbreak concluded 2026-07-02 (WHO DON611) — stats frozen, scraper disabled' })
   }
 
   // Fetch RSS feeds + WHO page in parallel

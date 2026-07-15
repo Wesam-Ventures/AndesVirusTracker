@@ -1,11 +1,14 @@
 name: Sync Outbreak Stats
 
+# Outbreak concluded 2026-07-02 (WHO DON611). Scheduled scraping is disabled so
+# it can't re-poison the frozen final stats. Re-enable the cron lines only if a
+# new related cluster emerges (also flip OUTBREAK_CONCLUDED in the sync-stats route).
 on:
-  schedule:
-    - cron: '0 * * * *'   # top of every hour
-    - cron: '15 * * * *'  # :15 past every hour
-    - cron: '30 * * * *'  # :30 past every hour
-    - cron: '45 * * * *'  # :45 past every hour
+  # schedule:
+  #   - cron: '0 * * * *'   # top of every hour
+  #   - cron: '15 * * * *'  # :15 past every hour
+  #   - cron: '30 * * * *'  # :30 past every hour
+  #   - cron: '45 * * * *'  # :45 past every hour
   workflow_dispatch:       # manual trigger from GitHub UI
 
 jobs:

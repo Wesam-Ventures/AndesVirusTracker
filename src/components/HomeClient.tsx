@@ -479,7 +479,7 @@ export default function Home({ stats: initialStats, news, events }: Props) {
             ANDES VIRUS<br /><span style={{ color: 'var(--red)' }}>TRACKER</span>
           </h1>
           <p style={{ fontSize: 15, color: 'var(--fg-mute)', maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
-            The only hantavirus strain confirmed to spread person-to-person — now active across multiple continents following the MV Hondius outbreak.
+            The only hantavirus strain confirmed to spread person-to-person. The full record of the 2026 MV Hondius outbreak, now declared over by the WHO.
           </p>
         </div>
 
@@ -511,9 +511,9 @@ export default function Home({ stats: initialStats, news, events }: Props) {
 
         {/* RETENTION CTA */}
         <div style={{
-          background: 'rgba(239,68,68,0.06)',
-          borderTop: '1px solid rgba(239,68,68,0.15)',
-          borderBottom: '1px solid rgba(239,68,68,0.15)',
+          background: 'rgba(74,222,128,0.06)',
+          borderTop: '1px solid rgba(74,222,128,0.15)',
+          borderBottom: '1px solid rgba(74,222,128,0.15)',
           padding: '10px 16px',
           display: 'flex',
           alignItems: 'center',
@@ -522,9 +522,9 @@ export default function Home({ stats: initialStats, news, events }: Props) {
           gap: 10,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div className="blink" style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }} />
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }} />
             <span className="font-mono" style={{ fontSize: 12, color: 'var(--fg)' }}>
-              OUTBREAK ACTIVE — New cases expected as monitoring window closes May 31
+              OUTBREAK OVER — WHO declared the MV Hondius outbreak contained on July 2, 2026. No new cases.
             </span>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -590,9 +590,9 @@ export default function Home({ stats: initialStats, news, events }: Props) {
         {/* SECONDARY ROW */}
         <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 1, background: 'var(--line)', marginTop: 1 }}>
           {[
-            { label: 'CASE FATALITY RATE', value: '~40%', color: 'var(--red)' },
+            { label: 'CASE FATALITY RATE', value: '23%', color: 'var(--red)' },
             { label: 'P2P TRANSMISSION',   value: 'CONFIRMED', color: 'var(--amber)' },
-            { label: 'ACTIVE VESSEL',       value: 'MV HONDIUS', color: 'var(--blue)' },
+            { label: 'SOURCE VESSEL',       value: 'MV HONDIUS', color: 'var(--blue)' },
           ].map(s => (
             <div key={s.label} style={{ background: 'var(--bg-1)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1.5 }}>{s.label}</span>
@@ -617,25 +617,25 @@ export default function Home({ stats: initialStats, news, events }: Props) {
           </div>
           <div style={{ flex: 1, minWidth: 180 }}>
             <div style={{ display: 'flex', gap: 2, marginBottom: 5 }}>
-              {[{ l:'LOW',c:'#4ade80'},{l:'MODERATE',c:'#f59e0b'},{l:'HIGH',c:'#ef4444'},{l:'CRITICAL',c:'#7f1d1d'}].map(lv => { const a = lv.l === stats.who_risk_level; return (
+              {[{ l:'LOW',c:'#4ade80'},{l:'MODERATE',c:'#f59e0b'},{l:'HIGH',c:'#ef4444'},{l:'CONTAINED',c:'#4ade80'}].map(lv => { const a = lv.l === stats.who_risk_level; return (
                 <div key={lv.l} style={{ flex: 1, height: 6, borderRadius: 2, background: a ? lv.c : 'rgba(148,163,184,0.1)', boxShadow: a ? `0 0 8px ${lv.c}80` : 'none', animation: a ? 'pulse 2s ease-in-out infinite' : undefined }} />
               )})}
 
             </div>
             <div style={{ display: 'flex', gap: 2 }}>
-              {[{l:'LOW',a:false},{l:'MODERATE',a:true},{l:'HIGH',a:false},{l:'CRITICAL',a:false}].map((lv,i) => (
-                <div key={lv.l} style={{ flex: 1 }}>
-                  <span className="font-mono" style={{ fontSize: 7, letterSpacing: 1, color: i===1?'#f59e0b':'var(--fg-dim)', fontWeight: i===1?700:400 }}>{lv.l}</span>
+              {['LOW','MODERATE','HIGH','CONTAINED'].map((l) => { const a = l === stats.who_risk_level; return (
+                <div key={l} style={{ flex: 1 }}>
+                  <span className="font-mono" style={{ fontSize: 7, letterSpacing: 1, color: a ? '#4ade80' : 'var(--fg-dim)', fontWeight: a ? 700 : 400 }}>{l}</span>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '0 0 auto' }}>
-            <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, padding: '6px 14px', textAlign: 'center' }}>
-              <div className="font-mono" style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', letterSpacing: 2 }}>{stats.who_risk_level}</div>
-              <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1, marginTop: 2 }}>P2P CONFIRMED</div>
+            <div style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, padding: '6px 14px', textAlign: 'center' }}>
+              <div className="font-mono" style={{ fontSize: 13, fontWeight: 700, color: '#4ade80', letterSpacing: 2 }}>{stats.who_risk_level}</div>
+              <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 1, marginTop: 2 }}>OUTBREAK OVER</div>
             </div>
-            <a href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599" target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 8, color: 'var(--blue)', letterSpacing: 1, textDecoration: 'none' }}>WHO →</a>
+            <a href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON611" target="_blank" rel="noopener noreferrer" className="font-mono" style={{ fontSize: 8, color: 'var(--blue)', letterSpacing: 1, textDecoration: 'none' }}>WHO →</a>
           </div>
         </div>
       </div>
@@ -651,10 +651,10 @@ export default function Home({ stats: initialStats, news, events }: Props) {
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
             <div>
               <div className="font-mono" style={{ fontSize: 10, color: 'var(--fg-mute)', letterSpacing: 2 }}>UNITED STATES MONITORING</div>
-              <div style={{ fontSize: 12, color: 'var(--fg-mute)', marginTop: 4 }}>6 states actively monitoring returned MV Hondius passengers</div>
+              <div style={{ fontSize: 12, color: 'var(--fg-mute)', marginTop: 4 }}>6 states monitored returned MV Hondius passengers. All cleared the 42-day window with zero US cases.</div>
             </div>
-            <div className="font-mono" style={{ fontSize: 10, color: '#3b82f6', letterSpacing: 1.5, fontWeight: 700 }}>
-              6 STATES · ACTIVE
+            <div className="font-mono" style={{ fontSize: 10, color: '#4ade80', letterSpacing: 1.5, fontWeight: 700 }}>
+              6 STATES · CLEARED
             </div>
           </div>
 
